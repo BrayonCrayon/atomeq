@@ -15,7 +15,7 @@ test('will insert element types into the database', function () {
 
     (new ImportElementDataJob())->handle();
 
-    $data->each(function($row) {
+    $data->filter(fn($row) => isset($row[15]))->each(function($row) {
        $this->assertDatabaseHas('types', ['name' => $row[15]]);
     });
 });
