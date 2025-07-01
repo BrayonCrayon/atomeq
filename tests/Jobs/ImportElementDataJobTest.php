@@ -34,3 +34,20 @@ test('will insert element states into the database', function () {
         ]);
     });
 });
+
+test('will insert discoverers into the database', function () {
+    $discoverers = $this->csvData->map(function ($row) {
+        return $row[23];
+    })->filter()->unique();
+
+    (new ImportElementDataJob())->handle();
+
+    $discoverers->each(function (string $discoverer) {
+        $this->assertDatabaseHas('discoverers', [
+            'name' => $discoverer
+        ]);
+    });
+});
+
+test('will insert elements into the database');
+test('will insert element discoveries into the database');

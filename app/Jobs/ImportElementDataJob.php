@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Discoverer;
 use App\Models\ElementState;
 use App\Models\Type;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,6 +39,13 @@ class ImportElementDataJob implements ShouldQueue
             ->unique()
             ->each(function ($state) {
                 ElementState::create(['name' => $state]);
+            });
+
+        $data->map(fn($line) => $line[23])
+            ->filter()
+            ->unique()
+            ->each(function ($discoverer) {
+                Discoverer::create(['name' => $discoverer]);
             });
     }
 }
