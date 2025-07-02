@@ -11,7 +11,7 @@ return new class () extends Migration {
             $table->id();
             $table->string('name');
             $table->smallInteger('atomic_number');
-            $table->decimal('atomic_mass');
+            $table->decimal('atomic_mass', 10, 8);
             $table->string('symbol');
 
             $table->smallInteger('neutrons');
@@ -28,12 +28,12 @@ return new class () extends Migration {
             $table->boolean('metalloid');
             $table->foreignId('type_id')->nullable()->references('id')->on('types');
 
-            $table->decimal('atomic_radius')->nullable();
-            $table->decimal('electronegativity')->nullable();
-            $table->decimal('first_ionization')->nullable();
+            $table->decimal('atomic_radius', 10, 8)->nullable();
+            $table->decimal('electronegativity', 10, 8)->nullable();
+            $table->decimal('first_ionization', 10, 8)->nullable();
             $table->string('density')->nullable();
-            $table->decimal('melting_point')->nullable();
-            $table->decimal('boiling_point')->nullable();
+            $table->decimal('melting_point', 10, 8)->nullable();
+            $table->decimal('boiling_point', 10, 8)->nullable();
             $table->smallInteger('isotopes')->nullable();
             $table->smallInteger('specific_heat')->nullable();
             $table->smallInteger('shells')->nullable();
@@ -42,7 +42,6 @@ return new class () extends Migration {
             $table->timestamps();
         });
     }
-
 
     public function down(): void
     {
