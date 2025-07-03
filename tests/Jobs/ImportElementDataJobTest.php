@@ -8,22 +8,24 @@ use Illuminate\Support\Facades\Storage;
 beforeEach(function () {
     $csvContent = Storage::disk()->get('Periodic_Table_of_Elements.csv');
     $lines = collect(explode(PHP_EOL, $csvContent));
-    $lines->shift();
+    $this->headers = collect(explode(',', $lines->shift()));
     $lines->pop();
-    $this->csvData = $lines->map(fn ($row) => str_getcsv($row));
+    $this->csvData = $lines->map(function ($row) {
+        return $this->headers->combine(str_getcsv($row))->toArray();
+    });
 });
 
 test('will insert element types into the database', function () {
     (new ImportElementDataJob)->handle();
 
-    $this->csvData->filter(fn ($row) => isset($row[15]))->each(function ($row) {
-        $this->assertDatabaseHas('types', ['name' => $row[15]]);
+    $this->csvData->filter(fn ($row) => isset($row['Type']))->each(function ($row) {
+        $this->assertDatabaseHas('types', ['name' => $row['Type']]);
     });
 });
 
 test('will insert element states into the database', function () {
     $elementStates = $this->csvData->map(function ($row) {
-        return $row[9];
+        return $row['Phase'];
     })->filter()->unique();
 
     (new ImportElementDataJob)->handle();
@@ -37,7 +39,7 @@ test('will insert element states into the database', function () {
 
 test('will insert discoverers into the database', function () {
     $discoverers = $this->csvData->map(function ($row) {
-        return $row[23];
+        return $row['Discoverer'];
     })->filter()->unique();
 
     (new ImportElementDataJob)->handle();
@@ -50,33 +52,34 @@ test('will insert discoverers into the database', function () {
 });
 
 test('will insert elements into the database', function () {
+    //TODO: Comeback to assert around the relationship hookup
     $elements = $this->csvData->map(function ($row) {
         return [
-            'name' => $row[1],
-            'atomic_number' => (int) $row[0],
-            'atomic_mass' => (float) $row[3],
-            'symbol' => $row[2],
-            'neutrons' => (int) $row[4],
-            'protons' => (int) $row[5],
-            'electrons' => (int) $row[6],
-            'period' => (int) $row[7],
-            'group' => (int) $row[8],
+            'name' => $row['Element'],
+            'atomic_number' => (int) $row['AtomicNumber'],
+            'atomic_mass' => (float) $row['AtomicMass'],
+            'symbol' => $row['Symbol'],
+            'neutrons' => (int) $row['NumberofNeutrons'],
+            'protons' => (int) $row['NumberofProtons'],
+            'electrons' => (int) $row['NumberofElectrons'],
+            'period' => (int) $row['Period'],
+            'group' => (int) $row['Group'],
             //           'element_state_id' => ,
-            'radioactive' => $row[10] === 'yes',
-            'natural' => $row[11] === 'yes',
-            'metal' => $row[12] === 'yes',
-            'metalloid' => $row[14] === 'yes',
-            // 'type_id' => $row[],
-            'atomic_radius' => (float) $row[16],
-            'electronegativity' => (float) $row[17],
-            'first_ionization' => (float) $row[18],
-            'density' => $row[19],
-            'melting_point' => (float) $row[20],
-            'boiling_point' => (float) $row[21],
-            'isotopes' => (int) $row[22],
-            'specific_heat' => (int) $row[25],
-            'shells' => (int) $row[26],
-            'valence' => (int) $row[27],
+            'radioactive' => $row['Radioactive'] === 'yes',
+            'natural' => $row['Natural'] === 'yes',
+            'metal' => $row['Metal'] === 'yes',
+            'metalloid' => $row['Metalloid'] === 'yes',
+            // 'type_id' => $row['Metalloid
+            'atomic_radius' => (float) $row['AtomicRadius'],
+            'electronegativity' => (float) $row['Electronegativity'],
+            'first_ionization' => (float) $row['FirstIonization'],
+            'density' => $row['Density'],
+            'melting_point' => (float) $row['MeltingPoint'],
+            'boiling_point' => (float) $row['BoilingPoint'],
+            'isotopes' => (int) $row['NumberOfIsotopes'],
+            'specific_heat' => (int) $row['SpecificHeat'],
+            'shells' => (int) $row['NumberofShells'],
+            'valence' => (int) $row['NumberofValence'],
         ];
     });
 
@@ -86,4 +89,5 @@ test('will insert elements into the database', function () {
         $this->assertDatabaseHas('elements', $element);
     });
 });
+
 test('will insert element discoveries into the database');

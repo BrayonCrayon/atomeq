@@ -49,7 +49,13 @@ class ImportElementDataJob implements ShouldQueue
                 Discoverer::create(['name' => $discoverer]);
             });
 
-        $data->map(function ($row) {
+        $elementStates = ElementState::all();
+        $elementTypes = Type::all();
+
+        $data->map(function ($row) use ($elementStates, $elementTypes) {
+            $rowState = $elementStates->first(fn ($item) => $item->name === $row[9]);
+            $rowType = $elementTypes->first(fn ($item) => $item->name === $row[15]);
+
             Element::create([
                 'name' => $row[1],
                 'atomic_number' => (int) $row[0],
@@ -60,12 +66,12 @@ class ImportElementDataJob implements ShouldQueue
                 'electrons' => (int) $row[6],
                 'period' => (int) $row[7],
                 'group' => (int) $row[8],
-                //           'element_state_id' => ,
+                'element_state_id' => $rowState->id,
                 'radioactive' => $row[10] === 'yes',
                 'natural' => $row[11] === 'yes',
                 'metal' => $row[12] === 'yes',
                 'metalloid' => $row[14] === 'yes',
-                // 'type_id' => $row[],
+                'type_id' => $rowType->id,
                 'atomic_radius' => (float) $row[16],
                 'electronegativity' => (float) $row[17],
                 'first_ionization' => (float) $row[18],
