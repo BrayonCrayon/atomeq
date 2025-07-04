@@ -3,6 +3,8 @@
 namespace Tests\Jobs;
 
 use App\Jobs\ImportElementDataJob;
+use App\Models\ElementState;
+use App\Models\Type;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -52,8 +54,20 @@ test('will insert discoverers into the database', function () {
 });
 
 test('will insert elements into the database', function () {
-    //TODO: Comeback to assert around the relationship hookup
-    $elements = $this->csvData->map(function ($row) {
+    (new ImportElementDataJob)->handle();
+
+    $elementStates = ElementState::query()->get();
+    $types = Type::query()->get();
+
+    $elements = $this->csvData->map(function ($row) use ($elementStates, $types) {
+        $elementStatesNames = $elementStates->pluck('id', 'name');
+        $targetState = $elementStatesNames->filter(function ($id, $name) use ($row) {
+           if ($row['Phase'] === $name) {
+               return true;
+           }
+           return false;
+        });
+
         return [
             'name' => $row['Element'],
             'atomic_number' => (int) $row['AtomicNumber'],
@@ -64,12 +78,12 @@ test('will insert elements into the database', function () {
             'electrons' => (int) $row['NumberofElectrons'],
             'period' => (int) $row['Period'],
             'group' => (int) $row['Group'],
-            //           'element_state_id' => ,
+            'element_state_id' =>  $targetState->first(),
             'radioactive' => $row['Radioactive'] === 'yes',
             'natural' => $row['Natural'] === 'yes',
             'metal' => $row['Metal'] === 'yes',
             'metalloid' => $row['Metalloid'] === 'yes',
-            // 'type_id' => $row['Metalloid
+            'type_id' => $types->first(fn($type) => $type->name === $row['Type'])->id,
             'atomic_radius' => (float) $row['AtomicRadius'],
             'electronegativity' => (float) $row['Electronegativity'],
             'first_ionization' => (float) $row['FirstIonization'],
@@ -82,8 +96,6 @@ test('will insert elements into the database', function () {
             'valence' => (int) $row['NumberofValence'],
         ];
     });
-
-    (new ImportElementDataJob)->handle();
 
     $elements->each(function ($element) {
         $this->assertDatabaseHas('elements', $element);
