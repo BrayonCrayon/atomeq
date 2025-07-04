@@ -3,6 +3,8 @@
 namespace Tests\Jobs;
 
 use App\Jobs\ImportElementDataJob;
+use App\Models\Discoverer;
+use App\Models\Element;
 use App\Models\ElementState;
 use App\Models\Type;
 use Illuminate\Support\Facades\Storage;
@@ -102,4 +104,29 @@ test('will insert elements into the database', function () {
     });
 });
 
-test('will insert element discoveries into the database');
+test('will insert element discoveries into the database', function () {
+    $elementDiscoveryPairs = $this->csvData->map(function ($row) {
+        return [
+            'name' => $row['Element'],
+            'discoverer' => $row['Discoverer'],
+            'year' => $row['Year']
+        ];
+    });
+
+    app(ImportElementDataJob::class)->handle();
+
+    // loop through each one and find the element
+    // the discoverer
+    // assert inside the element discoveries that all the data from $elementDiscoveryPairs is there (mainly ids)
+    $elementDiscoveryPairs->each(function ($pair) {
+        $element = Element::query()->where('name', $pair['name'])->first();
+        $discoverer = Discoverer::query()->where('name', $pair['discoverer'])->first();
+
+        $this->assertDatabaseHas('element_discoveries', [
+            'element_id' => $element->id,
+            'discoverer_id' => $discoverer->id,
+            'year' => $pair['year']
+        ]);
+    });
+
+});

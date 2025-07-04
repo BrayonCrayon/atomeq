@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Discoverer;
 use App\Models\Element;
+use App\Models\ElementDiscovery;
 use App\Models\ElementState;
 use App\Models\Type;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -25,9 +26,11 @@ class ImportElementDataJob implements ShouldQueue
 
         $lines = collect(explode(PHP_EOL, $csvContents));
         $lines->shift();
+        $headers = collect(explode(',', $lines->shift()));
         $lines->pop();
-
-        $data = $lines->map(fn ($row) => str_getcsv($row));
+        $data = $lines->map(function ($row) use ($headers) {
+            return $headers->combine(str_getcsv($row))->toArray();
+        });
 
         $data->map(fn ($line) => $line[15])
             ->unique()
@@ -51,37 +54,44 @@ class ImportElementDataJob implements ShouldQueue
 
         $elementStates = ElementState::all();
         $elementTypes = Type::all();
+        $discoverers = Discoverer::query()->get();
 
-        $data->map(function ($row) use ($elementStates, $elementTypes) {
+        $data->each(function ($row) use ($elementStates, $elementTypes, $discoverers) {
             $rowState = $elementStates->first(fn ($item) => $item->name === $row[9]);
             $rowType = $elementTypes->first(fn ($item) => $item->name === $row[15]);
 
-            Element::create([
-                'name' => $row[1],
-                'atomic_number' => (int) $row[0],
-                'atomic_mass' => (float) $row[3],
-                'symbol' => $row[2],
-                'neutrons' => (int) $row[4],
-                'protons' => (int) $row[5],
-                'electrons' => (int) $row[6],
-                'period' => (int) $row[7],
-                'group' => (int) $row[8],
+            $element = Element::create([
+                'name' => $row['Element'],
+                'atomic_number' => (int) $row['AtomicNumber'],
+                'atomic_mass' => (float) $row['AtomicMass'],
+                'symbol' => $row['Symbol'],
+                'neutrons' => (int) $row['NumberofNeutrons'],
+                'protons' => (int) $row['NumberofProtons'],
+                'electrons' => (int) $row['NumberofElectrons'],
+                'period' => (int) $row['Period'],
+                'group' => (int) $row['Group'],
                 'element_state_id' => $rowState->id,
-                'radioactive' => $row[10] === 'yes',
-                'natural' => $row[11] === 'yes',
-                'metal' => $row[12] === 'yes',
-                'metalloid' => $row[14] === 'yes',
+                'radioactive' => $row['Radioactive'] === 'yes',
+                'natural' => $row['Natural'] === 'yes',
+                'metal' => $row['Metal'] === 'yes',
+                'metalloid' => $row['Metalloid'] === 'yes',
                 'type_id' => $rowType->id,
-                'atomic_radius' => (float) $row[16],
-                'electronegativity' => (float) $row[17],
-                'first_ionization' => (float) $row[18],
-                'density' => $row[19],
-                'melting_point' => (float) $row[20],
-                'boiling_point' => (float) $row[21],
-                'isotopes' => (int) $row[22],
-                'specific_heat' => (int) $row[25],
-                'shells' => (int) $row[26],
-                'valence' => (int) $row[27],
+                'atomic_radius' => (float) $row['AtomicRadius'],
+                'electronegativity' => (float) $row['Electronegativity'],
+                'first_ionization' => (float) $row['FirstIonization'],
+                'density' => $row['Density'],
+                'melting_point' => (float) $row['MeltingPoint'],
+                'boiling_point' => (float) $row['BoilingPoint'],
+                'isotopes' => (int) $row['NumberOfIsotopes'],
+                'specific_heat' => (int) $row['SpecificHeat'],
+                'shells' => (int) $row['NumberofShells'],
+                'valence' => (int) $row['NumberofValence'],
+            ]);
+
+            ElementDiscovery::create([
+               'element_id' => $element->id,
+                'discoverer_id' => $discoverers->first(fn($guy) => $guy->name === $row['Discoverer'])->id ?? null,
+                'year' => $row['Year']
             ]);
         });
     }
