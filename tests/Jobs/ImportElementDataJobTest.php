@@ -8,6 +8,7 @@ use App\Models\Element;
 use App\Models\ElementState;
 use App\Models\Type;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
     $csvContent = Storage::disk()->get('Periodic_Table_of_Elements.csv');
@@ -115,17 +116,14 @@ test('will insert element discoveries into the database', function () {
 
     app(ImportElementDataJob::class)->handle();
 
-    // loop through each one and find the element
-    // the discoverer
-    // assert inside the element discoveries that all the data from $elementDiscoveryPairs is there (mainly ids)
     $elementDiscoveryPairs->each(function ($pair) {
         $element = Element::query()->where('name', $pair['name'])->first();
         $discoverer = Discoverer::query()->where('name', $pair['discoverer'])->first();
 
         $this->assertDatabaseHas('element_discoveries', [
             'element_id' => $element->id,
-            'discoverer_id' => $discoverer->id,
-            'year' => $pair['year']
+            'discoverer_id' => $discoverer->id ?? null,
+            'year' => Str::length($pair['year']) === 0 ? null : $pair['year']
         ]);
     });
 

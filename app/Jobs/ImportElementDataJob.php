@@ -10,6 +10,7 @@ use App\Models\Type;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ImportElementDataJob implements ShouldQueue
 {
@@ -25,27 +26,26 @@ class ImportElementDataJob implements ShouldQueue
         $csvContents = Storage::disk('local')->get('Periodic_Table_of_Elements.csv');
 
         $lines = collect(explode(PHP_EOL, $csvContents));
-        $lines->shift();
         $headers = collect(explode(',', $lines->shift()));
         $lines->pop();
         $data = $lines->map(function ($row) use ($headers) {
             return $headers->combine(str_getcsv($row))->toArray();
         });
 
-        $data->map(fn ($line) => $line[15])
+        $data->map(fn ($line) => $line['Type'])
             ->unique()
             ->each(function ($type) {
                 Type::create(['name' => $type]);
             });
 
-        $data->map(fn ($line) => $line[9])
+        $data->map(fn ($line) => $line['Phase'])
             ->filter()
             ->unique()
             ->each(function ($state) {
                 ElementState::create(['name' => $state]);
             });
 
-        $data->map(fn ($line) => $line[23])
+        $data->map(fn ($line) => $line['Discoverer'])
             ->filter()
             ->unique()
             ->each(function ($discoverer) {
@@ -57,8 +57,8 @@ class ImportElementDataJob implements ShouldQueue
         $discoverers = Discoverer::query()->get();
 
         $data->each(function ($row) use ($elementStates, $elementTypes, $discoverers) {
-            $rowState = $elementStates->first(fn ($item) => $item->name === $row[9]);
-            $rowType = $elementTypes->first(fn ($item) => $item->name === $row[15]);
+            $rowState = $elementStates->first(fn ($item) => $item->name === $row['Phase']);
+            $rowType = $elementTypes->first(fn ($item) => $item->name === $row['Type']);
 
             $element = Element::create([
                 'name' => $row['Element'],
@@ -91,7 +91,7 @@ class ImportElementDataJob implements ShouldQueue
             ElementDiscovery::create([
                'element_id' => $element->id,
                 'discoverer_id' => $discoverers->first(fn($guy) => $guy->name === $row['Discoverer'])->id ?? null,
-                'year' => $row['Year']
+                'year' => Str::length($row['Year']) === 0 ? null : $row['Year']
             ]);
         });
     }
