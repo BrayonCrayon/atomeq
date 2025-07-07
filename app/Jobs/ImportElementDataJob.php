@@ -15,14 +15,10 @@ use Illuminate\Support\Str;
 class ImportElementDataJob implements ShouldQueue
 {
     use Queueable;
-
-    public function __construct()
-    {
-        //
-    }
-
     public function handle(): void
     {
+        // TODO mass insertions
+
         $csvContents = Storage::disk('local')->get('Periodic_Table_of_Elements.csv');
 
         $lines = collect(explode(PHP_EOL, $csvContents));
@@ -32,18 +28,14 @@ class ImportElementDataJob implements ShouldQueue
             return $headers->combine(str_getcsv($row))->toArray();
         });
 
-        $data->map(fn ($line) => $line['Type'])
-            ->unique()
-            ->each(function ($type) {
-                Type::create(['name' => $type]);
-            });
+        $types = $data->map(fn ($line) => ['name' => $line['Type']])
+            ->unique()->toArray();
+        Type::insert($types);
 
-        $data->map(fn ($line) => $line['Phase'])
+        $phases = $data->map(fn ($line) => ['name' => $line['Phase']])
             ->filter()
-            ->unique()
-            ->each(function ($state) {
-                ElementState::create(['name' => $state]);
-            });
+            ->unique()->toArray();
+        ElementState::insert($phases);
 
         $data->map(fn ($line) => $line['Discoverer'])
             ->filter()
@@ -91,6 +83,7 @@ class ImportElementDataJob implements ShouldQueue
             ElementDiscovery::create([
                'element_id' => $element->id,
                 'discoverer_id' => $discoverers->first(fn($guy) => $guy->name === $row['Discoverer'])->id ?? null,
+                // TODO can make better
                 'year' => Str::length($row['Year']) === 0 ? null : $row['Year']
             ]);
         });

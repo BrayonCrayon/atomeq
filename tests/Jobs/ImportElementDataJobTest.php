@@ -63,13 +63,9 @@ test('will insert elements into the database', function () {
     $types = Type::query()->get();
 
     $elements = $this->csvData->map(function ($row) use ($elementStates, $types) {
-        $elementStatesNames = $elementStates->pluck('id', 'name');
-        $targetState = $elementStatesNames->filter(function ($id, $name) use ($row) {
-           if ($row['Phase'] === $name) {
-               return true;
-           }
-           return false;
-        });
+        $targetState = $elementStates
+            ->pluck('id', 'name')
+            ->first(fn($id, $name) => $row['Phase'] === $name);
 
         return [
             'name' => $row['Element'],
@@ -81,7 +77,7 @@ test('will insert elements into the database', function () {
             'electrons' => (int) $row['NumberofElectrons'],
             'period' => (int) $row['Period'],
             'group' => (int) $row['Group'],
-            'element_state_id' =>  $targetState->first(),
+            'element_state_id' =>  $targetState,
             'radioactive' => $row['Radioactive'] === 'yes',
             'natural' => $row['Natural'] === 'yes',
             'metal' => $row['Metal'] === 'yes',
