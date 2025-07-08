@@ -9,10 +9,10 @@ return new class () extends Migration {
     {
         Schema::create('elements', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->smallInteger('atomic_number');
+            $table->string('name')->unique();
+            $table->smallInteger('atomic_number')->unique();
             $table->double('atomic_mass');
-            $table->string('symbol');
+            $table->string('symbol')->unique();
 
             $table->smallInteger('neutrons');
             $table->smallInteger('protons');
