@@ -3,6 +3,12 @@
 1. Clone repository
 2. Run composer install
 3. Run `./vendor/bin/sail up -d`
+4. Run tests by `./vendor/bin/pest` or `./vendor/bin/sail artisan test`
+
+### Testing Environment Setup
+- Make a `.env.testing` file and copy the contents from `.env.testing.example`
+- Change `DB_HOST` to `testDB` ( This will make sure you are connecting to the docker testDB )
+
 
 ## Project Standards
 

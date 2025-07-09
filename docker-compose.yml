@@ -49,17 +49,17 @@ services:
                 - '${DB_USERNAME}'
             retries: 3
             timeout: 5s
-    pgsql-test:
+    testDB:
         image: 'postgres:latest'
         ports:
-            - '${FORWARD_DB_TEST_PORT:-5433}:5432'
+            - '${FORWARD_DB_TEST_PORT:-5434}:5432'
         environment:
-            PGPASSWORD: '${DB_TEST_PASSWORD:-secret}'
-            POSTGRES_DB: '${DB_TEST_DATABASE}'
-            POSTGRES_USER: '${DB_TEST_USERNAME}'
-            POSTGRES_PASSWORD: '${DB_TEST_PASSWORD:-secret}'
+            PGPASSWORD: '${DB_PASSWORD:-secret}'
+            POSTGRES_DB: '${DB_DATABASE}'
+            POSTGRES_USER: '${DB_USERNAME}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
         volumes:
-            - 'sail-pgsql:/var/lib/postgresql/data-test'
+            - 'sail-pgsqltest:/var/lib/postgresql/datatest'
             - './vendor/laravel/sail/database/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql'
         networks:
             - sail
@@ -69,9 +69,9 @@ services:
                 - pg_isready
                 - '-q'
                 - '-d'
-                - '${DB_TEST_DATABASE}'
+                - '${DB_DATABASE}'
                 - '-U'
-                - '${DB_TEST_USERNAME}'
+                - '${DB_USERNAME}'
             retries: 3
             timeout: 5s
     redis:
@@ -93,6 +93,8 @@ networks:
     sail:
         driver: bridge
 volumes:
+    sail-pgsqltest:
+        driver: local
     sail-pgsql:
         driver: local
     sail-redis:
