@@ -4,11 +4,12 @@
 2. Run composer install
 3. Run `./vendor/bin/sail up -d`
 4. Run tests by `./vendor/bin/pest` or `./vendor/bin/sail artisan test`
+5. Run migrations `./vendor/bin/sail artisan migrate`
+   6. Be sure to have the queue running with `./vendor/bin/sail artisan queue:work` command
 
-### Testing Environment Setup
+#### Testing Environment Setup
 - Make a `.env.testing` file and copy the contents from `.env.testing.example`
 - Change `DB_HOST` to `testDB` ( This will make sure you are connecting to the docker testDB )
-
 
 ## Project Standards
 

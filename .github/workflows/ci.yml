@@ -20,7 +20,7 @@ jobs:
           POSTGRES_USER: root
           POSTGRES_PASSWORD: password
         ports:
-          - 5434:5432
+          - 5432:5432
 
     steps:
       - uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
