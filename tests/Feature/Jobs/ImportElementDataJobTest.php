@@ -5,12 +5,18 @@ namespace Tests\Feature\Jobs;
 use App\Jobs\ImportElementDataJob;
 use App\Models\Discoverer;
 use App\Models\Element;
+use App\Models\ElementDiscovery;
 use App\Models\ElementState;
 use App\Models\Type;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
+    if (Discoverer::count() > 0) {
+        ElementDiscovery::query()->delete();
+        Discoverer::query()->delete();
+    }
+
     $csvContent = Storage::disk()->get('Periodic_Table_of_Elements.csv');
     $lines = collect(explode(PHP_EOL, $csvContent));
     $this->headers = collect(explode(',', $lines->shift()));
@@ -23,14 +29,16 @@ beforeEach(function () {
 test('will insert element types into the database', function () {
     (new ImportElementDataJob)->handle();
 
-    $this->csvData->filter(fn ($row) => isset($row['Type']))->each(function ($row) {
-        $this->assertDatabaseHas('types', ['name' => $row['Type']]);
-    });
+    $this->csvData->map(fn ($row) => $row['Type'])
+        ->filter()
+        ->each(function ($type) {
+            $this->assertDatabaseHas('types', ['name' => trim($type)]);
+        });
 });
 
 test('will insert element states into the database', function () {
     $elementStates = $this->csvData->map(function ($row) {
-        return $row['Phase'];
+        return trim($row['Phase']);
     })->filter()->unique();
 
     (new ImportElementDataJob)->handle();
@@ -44,7 +52,7 @@ test('will insert element states into the database', function () {
 
 test('will insert discoverers into the database', function () {
     $discoverers = $this->csvData->map(function ($row) {
-        return $row['Discoverer'];
+        return trim($row['Discoverer']);
     })->filter()->unique();
 
     (new ImportElementDataJob)->handle();
@@ -54,6 +62,7 @@ test('will insert discoverers into the database', function () {
             'name' => $discoverer,
         ]);
     });
+    $this->assertDatabaseCount('discoverers', $discoverers->count());
 });
 
 test('will insert elements into the database', function () {

@@ -13,7 +13,12 @@ return new class extends Migration
         // Darmstadtium, Roentgenium, Copernicium = GSI Helmholtz Centre for Heavy Ion Research
         // Nihonium = RIKEN
         // Flerovium, Moscovium, Livermorium, Oganesson = JINR and LLNL
-        // Tennessine = Oak Ridge National Laboratory and Vanderbilt University and JINR
+        // Tennessine = Oak Ridge National Laboratory and Vanderbilt University and
+
+    // TODO:
+    // create a DiscovererType table
+        // a person, institute
+        // add a column to Discoverer's table for type
 
     /**
      * Run the migrations.

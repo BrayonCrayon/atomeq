@@ -36,8 +36,10 @@ class ImportElementDataJob implements ShouldQueue
             ->unique()->toArray();
         ElementState::insert($phases);
 
-        $discoverers = $data->map(fn ($line) => ['name' => $line['Discoverer']])
-            ->filter()
+        $discoverers = $data->map(fn ($line) => ['name' => trim($line['Discoverer'])])
+            ->filter(function ($discoverer) {
+                return $discoverer['name'] !== '';
+            })
             ->unique()->toArray();
         Discoverer::insert($discoverers);
 
