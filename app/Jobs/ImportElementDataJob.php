@@ -9,6 +9,7 @@ use App\Models\ElementState;
 use App\Models\Type;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -36,11 +37,15 @@ class ImportElementDataJob implements ShouldQueue
             ->unique()->toArray();
         ElementState::insert($phases);
 
-        $discoverers = $data->map(fn ($line) => ['name' => trim($line['Discoverer'])])
+        $discoverers = $data->map(fn ($line) => [
+            'name' => trim($line['Discoverer']),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ])
             ->filter(function ($discoverer) {
                 return $discoverer['name'] !== '';
             })
-            ->unique()->toArray();
+            ->unique('name')->toArray();
         Discoverer::insert($discoverers);
 
         $elementStates = ElementState::all();

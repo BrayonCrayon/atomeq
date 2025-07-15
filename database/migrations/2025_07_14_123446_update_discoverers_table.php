@@ -27,10 +27,12 @@ return new class extends Migration
     {
         DB::table('discoverers')
             ->insert([
-                ['name' => 'GSI Helmholtz Centre for Heavy Ion Research'],
-                ['name' => 'RIKEN'],
-                ['name' => 'JINR and LLNL'],
-                ['name' => 'Oak Ridge National Laboratory and Vanderbilt University and JINR'],
+                ['name' => 'GSI Helmholtz Centre for Heavy Ion Research', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'RIKEN', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'JINR', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'LLNL', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Oak Ridge National Laboratory', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Vanderbilt University', 'created_at' => now(), 'updated_at' => now()],
             ]);
     }
 
