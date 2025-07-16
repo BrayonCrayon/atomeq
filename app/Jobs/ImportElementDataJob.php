@@ -28,11 +28,18 @@ class ImportElementDataJob implements ShouldQueue
             return $headers->combine(str_getcsv($row))->toArray();
         });
 
-        $types = $data->map(fn ($line) => ['name' => $line['Type']])
-            ->unique()->toArray();
+        $types = $data->map(fn ($line) => [
+            'name' => $line['Type'],
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ])
+            ->unique('name')
+            ->reject(fn($type) => !$type['name'])
+            ->toArray();
         Type::insert($types);
 
-        $phases = $data->map(fn ($line) => ['name' => $line['Phase']])
+        $phases = $data->map(fn ($line) => [
+            'name' => $line['Phase']])
             ->filter()
             ->unique()->toArray();
         ElementState::insert($phases);
