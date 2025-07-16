@@ -33,15 +33,19 @@ class ImportElementDataJob implements ShouldQueue
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ])
+            ->reject(fn ($type) => ! $type['name'])
             ->unique('name')
-            ->reject(fn($type) => !$type['name'])
             ->toArray();
         Type::insert($types);
 
         $phases = $data->map(fn ($line) => [
-            'name' => $line['Phase']])
-            ->filter()
-            ->unique()->toArray();
+            'name' => $line['Phase'],
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ])
+            ->reject(fn ($phase) => ! $phase['name'])
+            ->unique('name')
+            ->toArray();
         ElementState::insert($phases);
 
         $discoverers = $data->map(fn ($line) => [
@@ -84,6 +88,9 @@ class ImportElementDataJob implements ShouldQueue
 
     public function rowToElementInsert($elementStates, $elementTypes, $row): array //
     {
+        if ($elementTypes->first(fn($item) => $item->name === $row['Type'])?->id === null) {
+            dump($elementStates->toArray(), $elementTypes->toArray(), $row);
+        }
         return [
             'name' => $row['Element'],
             'atomic_number' => (int) $row['AtomicNumber'],
@@ -99,7 +106,7 @@ class ImportElementDataJob implements ShouldQueue
             'natural' => $row['Natural'] === 'yes',
             'metal' => $row['Metal'] === 'yes',
             'metalloid' => $row['Metalloid'] === 'yes',
-            'type_id' => $elementTypes->first(fn ($item) => $item->name === $row['Type'])->id,
+            'type_id' => $elementTypes->first(fn($item) => $item->name === $row['Type'])->id,
             'atomic_radius' => (float) $row['AtomicRadius'],
             'electronegativity' => (float) $row['Electronegativity'],
             'first_ionization' => (float) $row['FirstIonization'],
