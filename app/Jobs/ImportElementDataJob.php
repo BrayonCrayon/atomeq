@@ -48,11 +48,13 @@ class ImportElementDataJob implements ShouldQueue
             ->toArray();
         ElementState::insert($phases);
 
-        $discoverers = $data->map(fn ($line) => [
-            'name' => trim($line['Discoverer']),
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ])
+        $discoverers = $data->map(fn($line) => explode(',', $line['Discoverer']))
+            ->flatten()
+            ->map(fn ($name) => [
+                'name' => trim($name),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ])
             ->filter(function ($discoverer) {
                 return $discoverer['name'] !== '';
             })

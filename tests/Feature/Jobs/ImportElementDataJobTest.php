@@ -52,8 +52,8 @@ test('will insert element states into the database', function () {
 
 test('will insert discoverers into the database', function () {
     $discoverers = $this->csvData->map(function ($row) {
-        return trim($row['Discoverer']);
-    })->filter()->unique();
+        return explode(',', trim($row['Discoverer']));
+    })->flatten()->map(fn($name) => trim($name))->filter()->unique();
 
     (new ImportElementDataJob)->handle();
 
