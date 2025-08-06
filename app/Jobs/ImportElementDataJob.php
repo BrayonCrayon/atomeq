@@ -55,9 +55,7 @@ class ImportElementDataJob implements ShouldQueue
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ])
-            ->filter(function ($discoverer) {
-                return $discoverer['name'] !== '';
-            })
+            ->reject(fn ($discoverer) => ! $discoverer['name'])
             ->unique('name')->toArray();
         Discoverer::insert($discoverers);
 
@@ -88,11 +86,8 @@ class ImportElementDataJob implements ShouldQueue
         ElementDiscovery::insert($discoveriesToEnter->toArray());
     }
 
-    public function rowToElementInsert($elementStates, $elementTypes, $row): array //
+    public function rowToElementInsert($elementStates, $elementTypes, $row): array
     {
-        if ($elementTypes->first(fn ($item) => $item->name === $row['Type'])?->id === null) {
-            dump($elementStates->toArray(), $elementTypes->toArray(), $row);
-        }
         return [
             'name' => $row['Element'],
             'atomic_number' => (int) $row['AtomicNumber'],

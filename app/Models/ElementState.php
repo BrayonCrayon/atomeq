@@ -10,7 +10,8 @@ class ElementState extends Model
     use HasFactory;
 
     protected $fillable = [
-      'name',
-        'created_at','updated_at'
+        'name',
+        'created_at',
+        'updated_at'
     ];
 }
