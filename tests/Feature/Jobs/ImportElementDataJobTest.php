@@ -27,7 +27,7 @@ beforeEach(function () {
 });
 
 test('will insert element types into the database', function () {
-    (new ImportElementDataJob)->handle();
+    (new ImportElementDataJob())->handle();
 
     $this->csvData->map(fn ($row) => $row['Type'])
         ->filter()
@@ -41,7 +41,7 @@ test('will insert element states into the database', function () {
         return trim($row['Phase']);
     })->filter()->unique();
 
-    (new ImportElementDataJob)->handle();
+    (new ImportElementDataJob())->handle();
 
     $elementStates->each(function (string $state) {
         $this->assertDatabaseHas('element_states', [
@@ -53,9 +53,9 @@ test('will insert element states into the database', function () {
 test('will insert discoverers into the database', function () {
     $discoverers = $this->csvData->map(function ($row) {
         return explode(',', trim($row['Discoverer']));
-    })->flatten()->map(fn($name) => trim($name))->filter()->unique();
+    })->flatten()->map(fn ($name) => trim($name))->filter()->unique();
 
-    (new ImportElementDataJob)->handle();
+    (new ImportElementDataJob())->handle();
 
     $discoverers->each(function (string $discoverer) {
         $this->assertDatabaseHas('discoverers', [
@@ -66,7 +66,7 @@ test('will insert discoverers into the database', function () {
 });
 
 test('will insert elements into the database', function () {
-    (new ImportElementDataJob)->handle();
+    (new ImportElementDataJob())->handle();
 
     $elementStates = ElementState::query()->get();
     $types = Type::query()->get();
@@ -74,7 +74,7 @@ test('will insert elements into the database', function () {
     $elements = $this->csvData->map(function ($row) use ($elementStates, $types) {
         $targetState = $elementStates
             ->pluck('id', 'name')
-            ->first(fn($id, $name) => $row['Phase'] === $name);
+            ->first(fn ($id, $name) => $row['Phase'] === $name);
 
         return [
             'name' => $row['Element'],
@@ -91,7 +91,7 @@ test('will insert elements into the database', function () {
             'natural' => $row['Natural'] === 'yes',
             'metal' => $row['Metal'] === 'yes',
             'metalloid' => $row['Metalloid'] === 'yes',
-            'type_id' => $types->first(fn($type) => $type->name === $row['Type'])->id,
+            'type_id' => $types->first(fn ($type) => $type->name === $row['Type'])->id,
             'atomic_radius' => (float) $row['AtomicRadius'],
             'electronegativity' => (float) $row['Electronegativity'],
             'first_ionization' => (float) $row['FirstIonization'],

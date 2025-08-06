@@ -48,7 +48,7 @@ class ImportElementDataJob implements ShouldQueue
             ->toArray();
         ElementState::insert($phases);
 
-        $discoverers = $data->map(fn($line) => explode(',', $line['Discoverer']))
+        $discoverers = $data->map(fn ($line) => explode(',', $line['Discoverer']))
             ->flatten()
             ->map(fn ($name) => [
                 'name' => trim($name),
@@ -90,7 +90,7 @@ class ImportElementDataJob implements ShouldQueue
 
     public function rowToElementInsert($elementStates, $elementTypes, $row): array //
     {
-        if ($elementTypes->first(fn($item) => $item->name === $row['Type'])?->id === null) {
+        if ($elementTypes->first(fn ($item) => $item->name === $row['Type'])?->id === null) {
             dump($elementStates->toArray(), $elementTypes->toArray(), $row);
         }
         return [
@@ -108,7 +108,7 @@ class ImportElementDataJob implements ShouldQueue
             'natural' => $row['Natural'] === 'yes',
             'metal' => $row['Metal'] === 'yes',
             'metalloid' => $row['Metalloid'] === 'yes',
-            'type_id' => $elementTypes->first(fn($item) => $item->name === $row['Type'])->id,
+            'type_id' => $elementTypes->first(fn ($item) => $item->name === $row['Type'])->id,
             'atomic_radius' => (float) $row['AtomicRadius'],
             'electronegativity' => (float) $row['Electronegativity'],
             'first_ionization' => (float) $row['FirstIonization'],

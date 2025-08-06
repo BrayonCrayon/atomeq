@@ -2,10 +2,11 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration {
-    const targets = [
+return new class () extends Migration {
+    public const targets = [
         [
             'name' => 'Geselleschaft für Schwerionenforschung (GSI)',
             'id' => null,
@@ -41,19 +42,15 @@ return new class extends Migration {
     public function up(): void
     {
         DB::transaction(function () {
-            $discoverersToAdd = collect(self::targets)->map(function (array $discoverer) {
-                $discovererFound = DB::table('discoverers')->where('name', $discoverer['name'])->first();
+            $knownDiscoverers = DB::table('discoverers')
+                ->whereIn('name', collect(self::targets)->pluck('name'))
+                ->get();
 
-                if ($discovererFound) {
-                    $discoverer['id'] = $discovererFound->id;
-                } else {
-                    $id = DB::table('discoverers')->insertGetId([
-                        'name' => $discoverer['name'],
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now()
-                    ]);
-                    $discoverer['id'] = $id;
-                }
+            $discoverersToAdd = collect(self::targets)->map(function (array $discoverer) use ($knownDiscoverers) {
+                $discovererFound = $knownDiscoverers->where('name', $discoverer['name'])->first();
+
+                $discoverer['id'] = $discovererFound->id ??
+                    DB::table('discoverers')->insertGetId(['name' => $discoverer['name'], ...$this->getTimeStamps()]);
 
                 return $discoverer;
             });
@@ -63,16 +60,26 @@ return new class extends Migration {
             $dataToInsert = $discoverersToAdd->map(function (array $item) use ($elements) {
                 $relatedElementIds = $elements->whereIn('name', $item['elements'])->pluck('id');
 
-                return $relatedElementIds->map(function (int $elementId) use ($item) {
-                    return [
-                        'element_id' => $elementId,
-                        'discoverer_id' => $item['id'],
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now()
-                    ];
-                });
+                return $this->createElementDiscoveriesStruct($relatedElementIds, $item['id']);
             })->flatten(1)->toArray();
             DB::table('element_discoveries')->insert($dataToInsert);
         });
+    }
+
+    private function getTimeStamps(): array
+    {
+        return [
+            'updated_at' => Carbon::now(),
+            'created_at' => Carbon::now(),
+        ];
+    }
+
+    private function createElementDiscoveriesStruct(Collection $elementIds, int $discovererId): Collection
+    {
+        return $elementIds->map(fn (int $elementId) => [
+                'element_id' => $elementId,
+                'discoverer_id' => $discovererId,
+                ...$this->getTimeStamps()
+            ]);
     }
 };
