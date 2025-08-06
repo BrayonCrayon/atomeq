@@ -5,12 +5,18 @@ namespace Tests\Feature\Jobs;
 use App\Jobs\ImportElementDataJob;
 use App\Models\Discoverer;
 use App\Models\Element;
+use App\Models\ElementDiscovery;
 use App\Models\ElementState;
 use App\Models\Type;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
+    if (Discoverer::count() > 0) {
+        ElementDiscovery::query()->delete();
+        Discoverer::query()->delete();
+    }
+
     $csvContent = Storage::disk()->get('Periodic_Table_of_Elements.csv');
     $lines = collect(explode(PHP_EOL, $csvContent));
     $this->headers = collect(explode(',', $lines->shift()));
@@ -21,19 +27,21 @@ beforeEach(function () {
 });
 
 test('will insert element types into the database', function () {
-    (new ImportElementDataJob)->handle();
+    (new ImportElementDataJob())->handle();
 
-    $this->csvData->filter(fn ($row) => isset($row['Type']))->each(function ($row) {
-        $this->assertDatabaseHas('types', ['name' => $row['Type']]);
-    });
+    $this->csvData->map(fn ($row) => $row['Type'])
+        ->filter()
+        ->each(function ($type) {
+            $this->assertDatabaseHas('types', ['name' => trim($type)]);
+        });
 });
 
 test('will insert element states into the database', function () {
     $elementStates = $this->csvData->map(function ($row) {
-        return $row['Phase'];
+        return trim($row['Phase']);
     })->filter()->unique();
 
-    (new ImportElementDataJob)->handle();
+    (new ImportElementDataJob())->handle();
 
     $elementStates->each(function (string $state) {
         $this->assertDatabaseHas('element_states', [
@@ -44,20 +52,21 @@ test('will insert element states into the database', function () {
 
 test('will insert discoverers into the database', function () {
     $discoverers = $this->csvData->map(function ($row) {
-        return $row['Discoverer'];
-    })->filter()->unique();
+        return explode(',', trim($row['Discoverer']));
+    })->flatten()->map(fn ($name) => trim($name))->filter()->unique();
 
-    (new ImportElementDataJob)->handle();
+    (new ImportElementDataJob())->handle();
 
     $discoverers->each(function (string $discoverer) {
         $this->assertDatabaseHas('discoverers', [
             'name' => $discoverer,
         ]);
     });
+    $this->assertDatabaseCount('discoverers', $discoverers->count());
 });
 
 test('will insert elements into the database', function () {
-    (new ImportElementDataJob)->handle();
+    (new ImportElementDataJob())->handle();
 
     $elementStates = ElementState::query()->get();
     $types = Type::query()->get();
@@ -65,7 +74,7 @@ test('will insert elements into the database', function () {
     $elements = $this->csvData->map(function ($row) use ($elementStates, $types) {
         $targetState = $elementStates
             ->pluck('id', 'name')
-            ->first(fn($id, $name) => $row['Phase'] === $name);
+            ->first(fn ($id, $name) => $row['Phase'] === $name);
 
         return [
             'name' => $row['Element'],
@@ -82,7 +91,7 @@ test('will insert elements into the database', function () {
             'natural' => $row['Natural'] === 'yes',
             'metal' => $row['Metal'] === 'yes',
             'metalloid' => $row['Metalloid'] === 'yes',
-            'type_id' => $types->first(fn($type) => $type->name === $row['Type'])->id,
+            'type_id' => $types->first(fn ($type) => $type->name === $row['Type'])->id,
             'atomic_radius' => (float) $row['AtomicRadius'],
             'electronegativity' => (float) $row['Electronegativity'],
             'first_ionization' => (float) $row['FirstIonization'],

@@ -9,6 +9,7 @@ use App\Models\ElementState;
 use App\Models\Type;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -27,18 +28,35 @@ class ImportElementDataJob implements ShouldQueue
             return $headers->combine(str_getcsv($row))->toArray();
         });
 
-        $types = $data->map(fn ($line) => ['name' => $line['Type']])
-            ->unique()->toArray();
+        $types = $data->map(fn ($line) => [
+            'name' => $line['Type'],
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ])
+            ->reject(fn ($type) => ! $type['name'])
+            ->unique('name')
+            ->toArray();
         Type::insert($types);
 
-        $phases = $data->map(fn ($line) => ['name' => $line['Phase']])
-            ->filter()
-            ->unique()->toArray();
+        $phases = $data->map(fn ($line) => [
+            'name' => $line['Phase'],
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ])
+            ->reject(fn ($phase) => ! $phase['name'])
+            ->unique('name')
+            ->toArray();
         ElementState::insert($phases);
 
-        $discoverers = $data->map(fn ($line) => ['name' => $line['Discoverer']])
-            ->filter()
-            ->unique()->toArray();
+        $discoverers = $data->map(fn ($line) => explode(',', $line['Discoverer']))
+            ->flatten()
+            ->map(fn ($name) => [
+                'name' => trim($name),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ])
+            ->reject(fn ($discoverer) => ! $discoverer['name'])
+            ->unique('name')->toArray();
         Discoverer::insert($discoverers);
 
         $elementStates = ElementState::all();
@@ -68,7 +86,7 @@ class ImportElementDataJob implements ShouldQueue
         ElementDiscovery::insert($discoveriesToEnter->toArray());
     }
 
-    public function rowToElementInsert($elementStates, $elementTypes, $row): array //
+    public function rowToElementInsert($elementStates, $elementTypes, $row): array
     {
         return [
             'name' => $row['Element'],
