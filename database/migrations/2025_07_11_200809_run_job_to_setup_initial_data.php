@@ -10,7 +10,7 @@ return new class () extends Migration {
             return;
         }
 
-        ImportElementDataJob::dispatch()->withoutDelay();
+        (new ImportElementDataJob())->handle();
     }
 
     public function down(): void
