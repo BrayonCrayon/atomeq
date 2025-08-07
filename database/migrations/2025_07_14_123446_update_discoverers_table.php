@@ -10,32 +10,32 @@ return new class () extends Migration {
         [
             'name' => 'Geselleschaft für Schwerionenforschung (GSI)',
             'id' => null,
-            'elements' => ['Darmstadtium', 'Roentgenium', 'Copernicium']
+            'elements' => ['Darmstadtium', 'Roentgenium', 'Copernicium'],
         ],
         [
             'name' => 'RIKEN',
             'id' => null,
-            'elements' => ['Nihonium']
+            'elements' => ['Nihonium'],
         ],
         [
             'name' => 'Joint Institute for Nuclear Research',
             'id' => null,
-            'elements' => ['Flerovium', 'Moscovium', 'Livermorium', 'Oganesson']
+            'elements' => ['Flerovium', 'Moscovium', 'Livermorium', 'Oganesson'],
         ],
         [
             'name' => 'Lawrence Livermore National Laboratory',
             'id' => null,
-            'elements' => ['Flerovium', 'Moscovium', 'Livermorium', 'Oganesson']
+            'elements' => ['Flerovium', 'Moscovium', 'Livermorium', 'Oganesson'],
         ],
         [
             'name' => 'Oak Ridge National Laboratory',
             'id' => null,
-            'elements' => ['Tennessine']
+            'elements' => ['Tennessine'],
         ],
         [
             'name' => 'Vanderbilt University',
             'id' => null,
-            'elements' => ['Tennessine']
+            'elements' => ['Tennessine'],
         ],
     ];
 
@@ -77,9 +77,9 @@ return new class () extends Migration {
     private function createElementDiscoveriesStruct(Collection $elementIds, int $discovererId): Collection
     {
         return $elementIds->map(fn (int $elementId) => [
-                'element_id' => $elementId,
-                'discoverer_id' => $discovererId,
-                ...$this->getTimeStamps()
-            ]);
+            'element_id' => $elementId,
+            'discoverer_id' => $discovererId,
+            ...$this->getTimeStamps(),
+        ]);
     }
 };

@@ -86,7 +86,7 @@ test('will insert elements into the database', function () {
             'electrons' => (int) $row['NumberofElectrons'],
             'period' => (int) $row['Period'],
             'group' => (int) $row['Group'],
-            'element_state_id' =>  $targetState,
+            'element_state_id' => $targetState,
             'radioactive' => $row['Radioactive'] === 'yes',
             'natural' => $row['Natural'] === 'yes',
             'metal' => $row['Metal'] === 'yes',
@@ -115,7 +115,7 @@ test('will insert element discoveries into the database', function () {
         return [
             'name' => $row['Element'],
             'discoverer' => $row['Discoverer'],
-            'year' => $row['Year']
+            'year' => $row['Year'],
         ];
     });
 
@@ -128,7 +128,7 @@ test('will insert element discoveries into the database', function () {
         $this->assertDatabaseHas('element_discoveries', [
             'element_id' => $element->id,
             'discoverer_id' => $discoverer->id ?? null,
-            'year' => Str::length($pair['year']) === 0 ? null : $pair['year']
+            'year' => Str::length($pair['year']) === 0 ? null : $pair['year'],
         ]);
     });
 

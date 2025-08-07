@@ -10,8 +10,8 @@ class ElementDiscovery extends Model
     use HasFactory;
 
     protected $fillable = [
-      'element_id',
-      'discoverer_id',
-      'year'
+        'element_id',
+        'discoverer_id',
+        'year',
     ];
 }

@@ -33,7 +33,7 @@ class ImportElementDataJob implements ShouldQueue
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ])
-            ->reject(fn ($type) => ! $type['name'])
+            ->reject(fn ($type) => !$type['name'])
             ->unique('name')
             ->toArray();
         Type::insert($types);
@@ -43,7 +43,7 @@ class ImportElementDataJob implements ShouldQueue
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ])
-            ->reject(fn ($phase) => ! $phase['name'])
+            ->reject(fn ($phase) => !$phase['name'])
             ->unique('name')
             ->toArray();
         ElementState::insert($phases);
@@ -55,7 +55,7 @@ class ImportElementDataJob implements ShouldQueue
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ])
-            ->reject(fn ($discoverer) => ! $discoverer['name'])
+            ->reject(fn ($discoverer) => !$discoverer['name'])
             ->unique('name')->toArray();
         Discoverer::insert($discoverers);
 
@@ -82,6 +82,8 @@ class ImportElementDataJob implements ShouldQueue
             'element_id' => $realElements->first(fn (Element $element) => $element->name === $discovery['element_name'])->id,
             'discoverer_id' => $discovery['discoverer_id'],
             'year' => $discovery['year'],
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
         ]);
         ElementDiscovery::insert($discoveriesToEnter->toArray());
     }
