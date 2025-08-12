@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ElementResource;
 use App\Models\Element;
-use Illuminate\Http\Request;
 
 class ElementIndex extends Controller
 {
@@ -11,8 +11,6 @@ class ElementIndex extends Controller
     {
         $elements = Element::all();
 
-        return [
-            'data' => $elements
-        ];
+        return ElementResource::collection($elements);
     }
 }

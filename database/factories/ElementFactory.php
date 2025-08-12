@@ -7,10 +7,8 @@ use App\Models\ElementState;
 use App\Models\Type;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-
 class ElementFactory extends Factory
 {
-
     protected $model = Element::class;
 
     public function definition(): array
@@ -30,7 +28,7 @@ class ElementFactory extends Factory
             'natural' => $this->faker->boolean(),
             'metal' => $this->faker->boolean(),
             'metalloid' => $this->faker->boolean(),
-            'type_id' => fn() => Type::factory(),
+            'type_id' => fn () => Type::factory(),
             'atomic_radius' => $this->faker->randomFloat(3, 0, 1),
             'electronegativity' => $this->faker->randomFloat(3, 0, 1),
             'first_ionization' => $this->faker->randomFloat(3, 0, 1),

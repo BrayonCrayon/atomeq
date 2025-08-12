@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ElementStateFactory extends Factory
 {
-
     protected $model = ElementState::class;
 
     public function definition(): array
