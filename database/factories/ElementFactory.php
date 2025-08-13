@@ -17,7 +17,7 @@ class ElementFactory extends Factory
             'name' => $this->faker->name(),
             'atomic_number' => $this->faker->numberBetween(0, 100),
             'atomic_mass' => $this->faker->randomFloat(3, 0, 1),
-            'symbol' => $this->faker->lexify('??'),
+            'symbol' => $this->faker->unique()->lexify('??'),
             'neutrons' => $this->faker->numberBetween(0, 100),
             'protons' => $this->faker->numberBetween(0, 100),
             'electrons' => $this->faker->numberBetween(0, 100),

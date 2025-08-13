@@ -5,39 +5,38 @@ namespace Tests\Feature\Controllers;
 use App\Models\Element;
 
 test('will hit the endpoint and return a success code', function () {
-    $elements = Element::factory()->create();
+    $elements = Element::factory(2)->create();
 
-    $this->getJson(route('elements.index'))
-        ->assertOk()
-        ->assertExactJson(['data' =>
-            [
-                [
-                    'name' => $elements->name,
-                    'atomicNumber' => $elements->atomic_number,
-                    'atomicMass' => $elements->atomic_mass,
-                    'symbol' => $elements->symbol,
-                    'neutrons' => $elements->neutrons,
-                    'protons' => $elements->protons,
-                    'electrons' => $elements->electrons,
-                    'period' => $elements->period,
-                    'group' => $elements->group,
-                    'elementStateId' => $elements->element_state_id,
-                    'radioactive' => $elements->radioactive,
-                    'natural' => $elements->natural,
-                    'metal' => $elements->metal,
-                    'metalloid' => $elements->metalloid,
-                    'typeId' => $elements->type_id,
-                    'atomicRadius' => $elements->atomic_radius,
-                    'electronegativity' => $elements->electronegativity,
-                    'firstIonization' => $elements->first_ionization,
-                    'density' => $elements->density,
-                    'meltingPoint' => $elements->melting_point,
-                    'boilingPoint' => $elements->boiling_point,
-                    'isotopes' => $elements->isotopes,
-                    'specificHeat' => $elements->specific_heat,
-                    'shells' => $elements->shells,
-                    'valence' => $elements->valence
-                ]
-            ]
+    $callToGetElement = $this->getJson(route('elements.index'))
+        ->assertOk();
+
+    $elements->each(function ($element) use ($callToGetElement) {
+        $callToGetElement->assertJsonFragment([
+            'name' => $element->name,
+            'atomicNumber' => $element->atomic_number,
+            'atomicMass' => $element->atomic_mass,
+            'symbol' => $element->symbol,
+            'neutrons' => $element->neutrons,
+            'protons' => $element->protons,
+            'electrons' => $element->electrons,
+            'period' => $element->period,
+            'group' => $element->group,
+            'elementStateId' => $element->element_state_id,
+            'radioactive' => $element->radioactive,
+            'natural' => $element->natural,
+            'metal' => $element->metal,
+            'metalloid' => $element->metalloid,
+            'typeId' => $element->type_id,
+            'atomicRadius' => $element->atomic_radius,
+            'electronegativity' => $element->electronegativity,
+            'firstIonization' => $element->first_ionization,
+            'density' => $element->density,
+            'meltingPoint' => $element->melting_point,
+            'boilingPoint' => $element->boiling_point,
+            'isotopes' => $element->isotopes,
+            'specificHeat' => $element->specific_heat,
+            'shells' => $element->shells,
+            'valence' => $element->valence
         ]);
+    });
 });
