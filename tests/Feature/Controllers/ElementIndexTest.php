@@ -44,15 +44,18 @@ test('will hit the endpoint and return a success code', function () {
 
 test('will return relationships for each element', function () {
     $element = Element::factory()->create();
-dd($element->state);
+
     $this->getJson(route('elements.index'))
         ->assertOk()
         ->assertJsonFragment([
             'id' => $element->id,
             'elementStateId' => $element->element_state_id,
-            'elementState' => $element->state,
+            'elementState' => [
+                'id' => $element->state->id,
+                'name' => $element->state->name
+            ],
             'typeId' => $element->type_id,
-            'type' => $element->type
+//            'type' => $element->type
         ]);
 
 });

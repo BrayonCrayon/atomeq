@@ -41,6 +41,6 @@ class Element extends Model
 
     public function state() : BelongsTo
     {
-        return $this->belongsTo(ElementState::class);
+        return $this->belongsTo(ElementState::class, 'element_state_id', 'id');
     }
 }
