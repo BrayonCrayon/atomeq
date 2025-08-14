@@ -6,12 +6,9 @@ use App\Models\Element;
 
 test('will hit the endpoint and return a success code', function () {
     $elements = Element::factory(2)->create();
-
-    $callToGetElement = $this->getJson(route('elements.index'))
-        ->assertOk();
-
-    $elements->each(function ($element) use ($callToGetElement) {
-        $callToGetElement->assertJsonFragment([
+    $formattedElements = $elements->map(function ($element) {
+        return [
+            'id' => $element->id,
             'name' => $element->name,
             'atomicNumber' => $element->atomic_number,
             'atomicMass' => $element->atomic_mass,
@@ -37,14 +34,21 @@ test('will hit the endpoint and return a success code', function () {
             'specificHeat' => $element->specific_heat,
             'shells' => $element->shells,
             'valence' => $element->valence
-        ]);
+        ];
     });
+
+    $this->getJson(route('elements.index'))
+        ->assertOk()
+        ->assertExactJson([
+            'data' => $formattedElements->toArray()
+        ]);
 });
 
 test('will return relationships for each element', function () {
     $element = Element::factory()->create();
+    $relations = ['relations' => ['type', 'state']];
 
-    $this->getJson(route('elements.index'))
+    $this->getJson(route('elements.index', $relations))
         ->assertOk()
         ->assertJsonFragment([
             'id' => $element->id,
