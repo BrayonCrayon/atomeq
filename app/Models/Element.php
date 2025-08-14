@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Element extends Model
 {
@@ -39,8 +38,13 @@ class Element extends Model
         'valence',
     ];
 
-    public function state() : BelongsTo
+    public function state(): BelongsTo
     {
         return $this->belongsTo(ElementState::class, 'element_state_id', 'id');
+    }
+
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(Type::class);
     }
 }

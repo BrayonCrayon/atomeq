@@ -27,6 +27,7 @@ class ElementResource extends JsonResource
             'metal' => $this->resource['metal'],
             'metalloid' => $this->resource['metalloid'],
             'typeId' => $this->resource['type_id'],
+            'type' => new TypeResource($this->resource->type),
             'atomicRadius' => $this->resource['atomic_radius'],
             'electronegativity' => $this->resource['electronegativity'],
             'firstIonization' => $this->resource['first_ionization'],

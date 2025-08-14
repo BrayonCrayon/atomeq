@@ -3,7 +3,6 @@
 namespace Tests\Feature\Controllers;
 
 use App\Models\Element;
-use App\Models\ElementState;
 
 test('will hit the endpoint and return a success code', function () {
     $elements = Element::factory(2)->create();
@@ -55,7 +54,10 @@ test('will return relationships for each element', function () {
                 'name' => $element->state->name
             ],
             'typeId' => $element->type_id,
-//            'type' => $element->type
+            'type' => [
+                'id' => $element->type->id,
+                'name' => $element->type->name
+            ]
         ]);
 
 });
