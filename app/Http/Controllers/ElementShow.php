@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\ElementShowRequest;
 
 class ElementShow extends Controller
 {
-    public function __invoke()
+    public function __invoke(ElementShowRequest $request)
     {
+        $params = $request->input('id', []);
+
         return [];
     }
 }
