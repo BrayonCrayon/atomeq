@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Element extends Model
 {
@@ -36,4 +37,14 @@ class Element extends Model
         'shells',
         'valence',
     ];
+
+    public function state(): BelongsTo
+    {
+        return $this->belongsTo(ElementState::class, 'element_state_id', 'id');
+    }
+
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(Type::class);
+    }
 }
