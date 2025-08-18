@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Controllers;
 
+use App\Models\Discoverer;
 use App\Models\Element;
 
 test('will reject a request without element id', function () {
@@ -42,6 +43,20 @@ test('will hit the endpoint to retrieve a single element based on the id provide
                 'specificHeat' => $element->specific_heat,
                 'shells' => $element->shells,
                 'valence' => $element->valence,
-            ]
+            ],
         ]);
+});
+
+test("will return discoverers when retrieving an element data", function () {
+    $element = Element::factory()->hasDiscoverers()->create();
+
+    $response = $this->getJson(route('elements.show', $element->id), ['with' => ['discoverers']])
+        ->assertOk();
+
+    $element->discoverers->each(function (Discoverer $discoverer) use ($response) {
+        $response->assertJsonFragment([
+           'name' => $discoverer->name,
+            'id' => $discoverer->id,
+        ]);
+    });
 });
