@@ -5,14 +5,14 @@ namespace Tests\Feature\Controllers;
 use App\Models\Element;
 
 test('will reject a request without element id', function () {
-    $this->getJson(route('elements.show'))
-        ->assertUnprocessable();
+    $this->getJson(route('elements.show', ['element' => -2982929292]))
+        ->assertNotFound();
 });
 
-test('will hit the endpont to retrieve a single element based on the id provided in the query params', function () {
+test('will hit the endpoint to retrieve a single element based on the id provided in the query params', function () {
     $element = Element::factory()->create();
 
-    $this->getJson(route('elements.show', ['id' => $element->id]))
+    $this->getJson(route('elements.show', ['element' => $element->id]))
         ->assertOk()
         ->assertExactJson([
             'data' => [

@@ -2,18 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ElementShowRequest;
 use App\Http\Resources\ElementResource;
 use App\Models\Element;
+use Illuminate\Http\Request;
 
 class ElementShow extends Controller
 {
-    public function __invoke(ElementShowRequest $request)
+    public function __invoke(Request $request, Element $element): ElementResource
     {
-        $element = new ElementResource(Element::findOrFail($request->input('id')));
-
-        //TODO: handle if element is not found - findOrFail() returns 404, create a better error response and bubble it back up
-
-        return $element;
+        return new ElementResource($element);
     }
 }
