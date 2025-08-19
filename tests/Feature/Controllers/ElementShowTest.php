@@ -58,6 +58,7 @@ test("will return discoverers when retrieving an element data", function () {
         $response->assertJsonFragment([
             'id' => $discoverer->id,
             'name' => $discoverer->name,
+            'year' => $discoverer->pivot_year, //TODO: not populating correctly, please to fix
         ]);
     });
 });

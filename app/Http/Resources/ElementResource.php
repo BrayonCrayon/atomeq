@@ -42,8 +42,3 @@ class ElementResource extends JsonResource
         ];
     }
 }
-
-// discoverers: [
-// [ name: bob, id: 1]
-// [ name: sally, id: 2]
-// ]

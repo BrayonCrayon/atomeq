@@ -12,7 +12,7 @@ class ElementDiscoveryFactory extends Factory
         return [
             'element_id' => fn () => Element::factory()->create(),
             'discoverer_id' => fn () => Discoverer::factory()->create(),
-            'year' => $this->faker->year,
+            'year' => $this->faker->randomNumber(),
         ];
     }
 }
