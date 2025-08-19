@@ -50,13 +50,14 @@ test('will hit the endpoint to retrieve a single element based on the id provide
 test("will return discoverers when retrieving an element data", function () {
     $element = Element::factory()->hasDiscoverers()->create();
 
-    $response = $this->getJson(route('elements.show', $element->id), ['with' => ['discoverers']])
-        ->assertOk();
+    $response = $this->getJson(
+        route('elements.show', ['element' => $element->id, 'relations' => ['discoverers']])
+    )->assertOk();
 
     $element->discoverers->each(function (Discoverer $discoverer) use ($response) {
         $response->assertJsonFragment([
-           'name' => $discoverer->name,
             'id' => $discoverer->id,
+            'name' => $discoverer->name,
         ]);
     });
 });

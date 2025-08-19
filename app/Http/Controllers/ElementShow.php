@@ -10,6 +10,10 @@ class ElementShow extends Controller
 {
     public function __invoke(Request $request, Element $element): ElementResource
     {
+        $relations = $request->input('relations', []);
+
+        $element->load($relations);
+
         return new ElementResource($element);
     }
 }

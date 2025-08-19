@@ -38,7 +38,12 @@ class ElementResource extends JsonResource
             'specificHeat' => $this->resource->specific_heat,
             'shells' => $this->resource->shells,
             'valence' => $this->resource->valence,
-            'discoverers' => new DiscovererResource($this->whenLoaded('discoverers')),
+            'discoverers' => DiscovererResource::collection($this->whenLoaded('discoverers')),
         ];
     }
 }
+
+// discoverers: [
+// [ name: bob, id: 1]
+// [ name: sally, id: 2]
+// ]
