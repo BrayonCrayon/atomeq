@@ -13,7 +13,7 @@ test('will reject a request without element id', function () {
 test('will hit the endpoint to retrieve a single element based on the id provided in the query params', function () {
     $element = Element::factory()->create();
 
-    $this->getJson(route('elements.show', ['element' => $element->id]))
+    $this->getJson(route('elements.show', ['element' => $element->name]))
         ->assertOk()
         ->assertExactJson([
             'data' => [
@@ -51,7 +51,7 @@ test("will return discoverers when retrieving an element data", function () {
     $element = Element::factory()->hasDiscoverers()->create();
 
     $response = $this->getJson(
-        route('elements.show', ['element' => $element->id, 'relations' => ['discoverers']])
+        route('elements.show', ['element' => $element->name, 'relations' => ['discoverers']])
     )->assertOk();
 
     $element->discoverers->each(function (Discoverer $discoverer) use ($response) {
