@@ -9,6 +9,8 @@ class ElementDiscovery extends Model
 {
     use HasFactory;
 
+    protected $table = 'element_discoveries';
+
     protected $fillable = [
         'element_id',
         'discoverer_id',

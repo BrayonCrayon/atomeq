@@ -48,7 +48,7 @@ test('will hit the endpoint to retrieve a single element based on the id provide
 });
 
 test("will return discoverers when retrieving an element data", function () {
-    $element = Element::factory()->hasDiscoverers()->create();
+    $element = Element::factory()->hasAttached(Discoverer::factory(), ['year' => 2001])->create();
 
     $response = $this->getJson(
         route('elements.show', ['element' => $element->name, 'relations' => ['discoverers']])
@@ -58,7 +58,7 @@ test("will return discoverers when retrieving an element data", function () {
         $response->assertJsonFragment([
             'id' => $discoverer->id,
             'name' => $discoverer->name,
-            'year' => $discoverer->pivot_year, //TODO: not populating correctly, please to fix
+            'year' => $discoverer->pivot->year,
         ]);
     });
 });

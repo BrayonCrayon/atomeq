@@ -51,6 +51,6 @@ class Element extends Model
 
     public function discoverers(): BelongsToMany
     {
-        return $this->belongsToMany(Discoverer::class, 'element_discoveries')->withPivot('year');
+        return $this->belongsToMany(Discoverer::class, ElementDiscovery::class)->withPivot('year');
     }
 }
