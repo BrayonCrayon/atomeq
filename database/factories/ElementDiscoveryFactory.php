@@ -10,8 +10,8 @@ class ElementDiscoveryFactory extends Factory
     public function definition(): array
     {
         return [
-            'element_id' => fn () => Element::factory()->create(),
-            'discoverer_id' => fn () => Discoverer::factory()->create(),
+            'element_id' => fn () => Element::factory(),
+            'discoverer_id' => fn () => Discoverer::factory(),
             'year' => $this->faker->randomNumber(),
         ];
     }
