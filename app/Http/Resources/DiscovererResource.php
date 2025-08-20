@@ -12,7 +12,7 @@ class DiscovererResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'name' => $this->resource->name,
-            'year' => $this->resource->pivot_year,
+            'year' => $this->resource->pivot->year,
         ];
     }
 }
