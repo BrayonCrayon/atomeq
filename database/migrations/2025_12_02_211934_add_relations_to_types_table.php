@@ -14,24 +14,32 @@ return new class () extends Migration {
             });
 
             $types = DB::table('types')->get();
+            $parents = $types->whereIn('name', ['metal', 'nonmetal', 'metalloid']);
+            $children = $types->whereNotIn('name', $parents);
+            $nonMetals = $types->whereIn('name', ['noble-gas', 'halogen']);
+            $metals = $children->whereNotIn('name', $nonMetals);
 
-            $children = $types->filter(function ($type) {
-                return $type['name'] !== 'metal' || $type['name'] !== 'nonmetal' || $type['name'] !== 'metalloid';
+            $nonMetals->each(function ($nonmetal) use ($parents) {
+                $nonmetalParent = $parents->where('name', '=', 'nonmetal');
+                $nonmetal->parent_id = $nonmetalParent[0]->id;
             });
 
-            // TODO: we stopped here
-            // TODO: highlight the nonmetal as a subgroup only as part of the overall nonmetal parent group on parent select
-            $nonMetals = collect(['noble-gas', 'halogen']);
-            $metalChildren = $children->filter(function ($child) {
-                // return all types that are metal types
+            // TODO: this is indexed weirdly
+            // TODO: fix indexing
+            $metals->each(function ($metal) use ($parents) {
+                $metalParent = $parents->where('name', '=', 'metal');
+                dd($metalParent[6]);
+                $metal->parent_id = $metalParent->id;
             });
+
+            // TODO: commit updated types to the database
         });
     }
 
     public function down(): void
     {
         Schema::table('types', function (Blueprint $table) {
-            $table->dropForeign('parent_id_types_index'); // TODO: Double check the naming of this when the column is created.
+//            $table->dropForeign('parent_id_types_index'); // TODO: Double check the naming of this when the column is created.
         });
     }
 };
