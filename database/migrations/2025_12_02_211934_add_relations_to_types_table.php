@@ -14,11 +14,14 @@ return new class () extends Migration {
                     $table->foreignId('parent_id')->nullable()->default(null)->references('id')->on('types');
                 });
 
+                $parentsNames = ['metal', 'nonmetal', 'metalloid'];
+                $nonMetalChildrenNames = ['noble-gas', 'halogen'];
+
                 $types = DB::table('types')->get();
-                $parents = $types->whereIn('name', ['metal', 'nonmetal', 'metalloid']);
+                $parents = $types->whereIn('name', $parentsNames);
                 $children = $types->whereNotIn('name', $parents);
-                $nonMetals = $types->whereIn('name', ['noble-gas', 'halogen']);
-                $metals = $children->whereNotIn('name', ['metal', 'nonmetal', 'metalloid', 'noble-gas', 'halogen']);
+                $nonMetals = $types->whereIn('name', $nonMetalChildrenNames);
+                $metals = $children->whereNotIn('name', array_merge($parentsNames, $nonMetalChildrenNames));
 
                 $nonMetals = $nonMetals->map(function ($nonMetal) use ($parents) {
                     $nonMetalParent = $parents->where('name', '=', 'nonmetal')->values();
