@@ -8,43 +8,33 @@ use Illuminate\Support\Facades\Schema;
 return new class () extends Migration {
     public function up(): void
     {
-        try {
-            DB::transaction(function () {
-                Schema::table('types', function (Blueprint $table) {
-                    $table->foreignId('parent_id')->nullable()->default(null)->references('id')->on('types');
-                });
-
-                $parentsNames = ['metal', 'nonmetal', 'metalloid'];
-                $nonMetalChildrenNames = ['noble-gas', 'halogen'];
-
-                $types = DB::table('types')->get();
-                $parents = $types->whereIn('name', $parentsNames);
-                $children = $types->whereNotIn('name', $parents);
-                $nonMetals = $types->whereIn('name', $nonMetalChildrenNames);
-                $metals = $children->whereNotIn('name', array_merge($parentsNames, $nonMetalChildrenNames));
-
-                $nonMetals = $nonMetals->map(function ($nonMetal) use ($parents) {
-                    $nonMetalParent = $parents->where('name', '=', 'nonmetal')->values();
-                    $nonMetal->parent_id = $nonMetalParent[0]->id;
-
-                    return (array)$nonMetal;
-                });
-
-                $metals = $metals->map(function ($metal) use ($parents) {
-                    $metalParent = $parents->where('name', '=', 'metal')->values();
-                    $metal->parent_id = $metalParent[0]->id;
-
-                    return (array)$metal;
-                });
-
-                DB::table('types')->upsert($nonMetals->toArray(), ['id'], ['parent_id']);
-                DB::table('types')->upsert($metals->toArray(), ['id'], ['parent_id']);
-
+        DB::transaction(function () {
+            Schema::table('types', function (Blueprint $table) {
+                $table->foreignId('parent_id')->nullable()->default(null)->references('id')->on('types');
             });
-        } catch (Exception $exception) {
-            throw new Error("Force rollback with $exception");
 
-        }
+            $parentsNames = ['metal', 'nonmetal', 'metalloid'];
+            $nonMetalChildrenNames = ['noble-gas', 'halogen'];
+
+            $types = DB::table('types')->get();
+            [$metal, $_, $nonmetal] = $types->whereIn('name', $parentsNames)->sortBy('name')->values()->toArray();
+            $children = $types->whereNotIn('name', $parentsNames);
+            $nonMetalKids = $types->whereIn('name', $nonMetalChildrenNames);
+            $metalKids = $children->whereNotIn('name', array_merge($parentsNames, $nonMetalChildrenNames));
+
+            $nonMetalKids = $nonMetalKids->map(function ($nonMetal) use ($nonmetal) {
+                $nonMetal->parent_id = $nonmetal->id;
+                return (array)$nonMetal;
+            });
+
+            $metalKids = $metalKids->map(function ($metalKid) use ($metal) {
+                $metalKid->parent_id = $metal->id;
+                return (array)$metalKid;
+            });
+
+            DB::table('types')->upsert($nonMetalKids->toArray(), ['id'], ['parent_id']);
+            DB::table('types')->upsert($metalKids->toArray(), ['id'], ['parent_id']);
+        });
     }
 
     public function down(): void
