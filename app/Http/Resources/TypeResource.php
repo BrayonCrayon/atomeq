@@ -11,7 +11,8 @@ class TypeResource extends JsonResource
     {
         return [
             'id' => $this->resource->id,
-            'name' => $this->resource->name
+            'name' => $this->resource->name,
+            'parent_id' => $this->resource->parent_id,
         ];
     }
 }
