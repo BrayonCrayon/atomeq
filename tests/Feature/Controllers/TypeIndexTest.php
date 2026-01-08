@@ -12,7 +12,7 @@ test('will access the type index route and retrieve a status of 200', function (
                 [
                     'id' => $type->id,
                     'name' => $type->name,
-                    'parent_id' => $type->parent_id,
+                    'parentId' => $type->parent_id,
                 ],
             ],
         ]);
