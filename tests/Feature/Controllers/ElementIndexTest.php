@@ -55,13 +55,14 @@ test('will return relationships for each element', function () {
             'elementStateId' => $element->element_state_id,
             'elementState' => [
                 'id' => $element->state->id,
-                'name' => $element->state->name
+                'name' => $element->state->name,
             ],
             'typeId' => $element->type_id,
             'type' => [
                 'id' => $element->type->id,
-                'name' => $element->type->name
-            ]
+                'name' => $element->type->name,
+                'parent_id' => $element->type->parent_id,
+            ],
         ]);
 
 });
