@@ -61,7 +61,7 @@ test('will return relationships for each element', function () {
             'type' => [
                 'id' => $element->type->id,
                 'name' => $element->type->name,
-                'parent_id' => $element->type->parent_id,
+                'parentId' => $element->type->parent_id,
             ],
         ]);
 
