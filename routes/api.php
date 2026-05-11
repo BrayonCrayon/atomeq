@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ComputeChemicalEquation;
 use App\Http\Controllers\ElementIndex;
 use App\Http\Controllers\ElementShow;
 use App\Http\Controllers\ElementStateIndex;
@@ -10,3 +11,4 @@ Route::get('/elements', ElementIndex::class)->name('elements.index');
 Route::get('/elements/{element:name}', ElementShow::class)->name('elements.show');
 Route::get('/types', TypeIndex::class)->name('types.index');
 Route::get('/states', ElementStateIndex::class)->name('states.index');
+Route::post('/compute-chemical-equation', ComputeChemicalEquation::class)->name('compute-chemical-equation');
