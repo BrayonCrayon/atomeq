@@ -3,9 +3,9 @@
 namespace App\ChemicalEvaluator;
 
 use App\ChemicalEvaluator\Enums\Reactions;
-use App\ChemicalEvaluator\General\Operand;
+use App\ChemicalEvaluator\General\BinaryOperator;
 
-class Reaction extends Operand
+class ReactionOperator extends BinaryOperator
 {
     public Reactions $type;
 }

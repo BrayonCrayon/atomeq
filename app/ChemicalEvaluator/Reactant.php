@@ -2,9 +2,9 @@
 
 namespace App\ChemicalEvaluator;
 
-use App\ChemicalEvaluator\General\Token;
+use App\ChemicalEvaluator\General\Operand;
 
-class Reactant extends Token
+class Reactant extends Operand
 {
     // $atom: The number of atoms of a substance. It is the number following the substance ex: (H2O, Na, HCl)
     // $coefficient: The coefficient of a substance. It is the number preceding the substance ex: (2H2O, 2Na, 2HCl)
