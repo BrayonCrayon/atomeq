@@ -13,8 +13,7 @@ class Reactant extends Operand
     // $substance: The symbol of a substance ex: (H2O, Na, HCl)
     // $state: The state of a substance. The letter in brackets following the substance. ex: (2HCl(aq) + 2Na(s) → 2NaCl(aq) + H2(g))
     public int $coefficient = 1;
-    public int $atom = 1;
-    public string $substance = '';
+    public array $substances = [];
 
     public function __construct(string $reactant)
     {
@@ -27,14 +26,16 @@ class Reactant extends Operand
             $this->coefficient = (int) $matches[0];
         }
 
-        if (preg_match('/[a-zA-Z]+/', $reactant, $matches)) {
-            $this->substance = $matches[0];
-        } else {
-            throw new InvalidArgumentException('Reactant must contain a substance');
+        $substancesStr = Str::after($reactant, $this->coefficient);
+        if (! $substancesStr) {
+            throw new InvalidArgumentException('Reactant must contain at least one substance');
         }
 
-        if (preg_match('/<sub>(\d+)<\/sub>/', $reactant, $matches)) {
-            $this->atom = (int) $matches[1];
-        }
+        $substanceRegex = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?/';
+        preg_match_all($substanceRegex, $reactant, $matches);
+        collect(...$matches)->each(function ($match) {
+            $this->substances[] = new Substance($match);
+        });
+
     }
 }

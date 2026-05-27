@@ -6,18 +6,33 @@ describe('Reactant', function () {
     test('will create a reactant', function () {
         $target = new Reactant('H');
 
-        expect($target->substance)->toBe('H')
-            ->and($target->coefficient)->toBe(1)
-            ->and($target->atom)->toBe(1);
+        expect($target->substances)->toHaveCount(1)
+            ->and($target->substances[0]->element)->toBe('H')
+            ->and($target->substances[0]->atom)->toBe(1)
+            ->and($target->coefficient)->toBe(1);
     });
 
     test('will create a reactant with a coefficient', function () {
        $substance = '2H';
        $target = new Reactant($substance);
 
-       expect($target->substance)->toBe('H')
-            ->and($target->coefficient)->toBe(2)
-            ->and($target->atom)->toBe(1);
+       expect($target->substances)->tohaveCount(1)
+            ->and($target->substances[0]->element)->toBe('H')
+            ->and($target->substances[0]->atom)->toBe(1)
+            ->and($target->coefficient)->toBe(2);
+    });
+
+    test('will create a reactant with a complex substance', function () {
+       $substance = '2H<sub>2</sub>O';
+
+        $target = new Reactant($substance);
+
+        expect($target->substances)->toHaveCount(2)
+            ->and($target->substances[0]->element)->toBe('H')
+            ->and($target->substances[0]->atom)->toBe(2)
+            ->and($target->substances[1]->element)->toBe('O')
+            ->and($target->substances[1]->atom)->toBe(1)
+            ->and($target->coefficient)->toBe(2);
     });
 
     test('will throw an exception when no substance is provided', function () {
