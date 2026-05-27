@@ -37,5 +37,15 @@ class Reactant extends Operand
             $this->substances[] = new Substance($match);
         });
 
+        $oldLeftOvers = $substancesStr;
+        $newLeftOvers = $substancesStr;
+        do {
+            $oldLeftOvers = $newLeftOvers;
+            $newLeftOvers = preg_replace($substanceRegex, '', $oldLeftOvers);
+        } while ($newLeftOvers !== $oldLeftOvers);
+
+        if ($newLeftOvers) {
+            throw new InvalidArgumentException('Reactant must contain only substance symbols');
+        }
     }
 }

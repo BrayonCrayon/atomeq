@@ -44,4 +44,11 @@ describe('Reactant', function () {
         $this->expectException(InvalidArgumentException::class);
         new Reactant('');
     });
+
+    test('will throw if the substance provided has invalid characters', function () {
+        $this->expectException(InvalidArgumentException::class);
+        $substance = '2H!<sub>2</sub>O';
+
+        new Reactant($substance);
+    });
 });
