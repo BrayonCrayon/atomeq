@@ -44,4 +44,27 @@ describe('Tokenizer', function () {
            ->and($tokenizer->stack[2])->toBeInstanceOf(Reactant::class)
            ->and($tokenizer->stack[2]->substances[0]->element)->toBe('H');
     });
+
+    test('will organize when more than two reactants are present', function () {
+        /** expected HOClNa+++ */
+        $equation = "H + O + Cl + Na";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($equation);
+
+        $tokenizer->organize();
+
+        expect($tokenizer->stack)->toBeInstanceOf(SplStack::class)
+            ->and($tokenizer->stack)->toHaveCount(7)
+            ->and($tokenizer->stack[0])->toBeInstanceOf(AdditionOperator::class)
+            ->and($tokenizer->stack[1])->toBeInstanceOf(AdditionOperator::class)
+            ->and($tokenizer->stack[2])->toBeInstanceOf(AdditionOperator::class)
+            ->and($tokenizer->stack[3])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[3]->substances[0]->element)->toBe('Na')
+            ->and($tokenizer->stack[4])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[4]->substances[0]->element)->toBe('Cl')
+            ->and($tokenizer->stack[5])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[5]->substances[0]->element)->toBe('O')
+            ->and($tokenizer->stack[6])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[6]->substances[0]->element)->toBe('H');
+    });
 });
