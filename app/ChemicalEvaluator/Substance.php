@@ -6,6 +6,8 @@ use InvalidArgumentException;
 
 class Substance
 {
+    // $atom: The number of atoms of a substance. It is the number following the substance ex: (H2, Na3, Cl7)
+    // $element: The name of the substance ex: (H, Na, Cl)
     public int $atom = 1;
     public string $element = '';
 
