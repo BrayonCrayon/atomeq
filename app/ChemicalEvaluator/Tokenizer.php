@@ -14,6 +14,7 @@ class Tokenizer
 
     private array $operators = [
         '+' => AdditionOperator::class,
+        '=' => ReactionOperator::class
     ];
 
     public function __construct()

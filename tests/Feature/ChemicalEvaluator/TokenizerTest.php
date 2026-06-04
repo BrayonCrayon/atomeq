@@ -1,8 +1,8 @@
 <?php
 
-
 use App\ChemicalEvaluator\AdditionOperator;
 use App\ChemicalEvaluator\Reactant;
+use App\ChemicalEvaluator\ReactionOperator;
 use App\ChemicalEvaluator\Tokenizer;
 
 describe('Tokenizer', function () {
@@ -30,19 +30,19 @@ describe('Tokenizer', function () {
     });
 
     test('will organize the tokens into reverse polish notation', function () {
-       $equation = "H + O";
-       $tokenizer = new Tokenizer();
-       $tokenizer->tokenize($equation);
+        $equation = "H + O";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($equation);
 
-       $tokenizer->organize();
+        $tokenizer->organize();
 
-       expect($tokenizer->stack)->toBeInstanceOf(SplStack::class)
-           ->and($tokenizer->stack)->toHaveCount(3)
-           ->and($tokenizer->stack[0])->toBeInstanceOf(AdditionOperator::class)
-           ->and($tokenizer->stack[1])->toBeInstanceOf(Reactant::class)
-           ->and($tokenizer->stack[1]->substances[0]->element)->toBe('O')
-           ->and($tokenizer->stack[2])->toBeInstanceOf(Reactant::class)
-           ->and($tokenizer->stack[2]->substances[0]->element)->toBe('H');
+        expect($tokenizer->stack)->toBeInstanceOf(SplStack::class)
+            ->and($tokenizer->stack)->toHaveCount(3)
+            ->and($tokenizer->stack[0])->toBeInstanceOf(AdditionOperator::class)
+            ->and($tokenizer->stack[1])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[1]->substances[0]->element)->toBe('O')
+            ->and($tokenizer->stack[2])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[2]->substances[0]->element)->toBe('H');
     });
 
     test('will organize when more than two reactants are present', function () {
@@ -66,5 +66,39 @@ describe('Tokenizer', function () {
             ->and($tokenizer->stack[5]->substances[0]->element)->toBe('O')
             ->and($tokenizer->stack[6])->toBeInstanceOf(Reactant::class)
             ->and($tokenizer->stack[6]->substances[0]->element)->toBe('H');
+    });
+
+    test('will correctly identify reaction operators', function () {
+        $question = "H + O =";
+        $tokenizer = new Tokenizer();
+
+        $tokenizer->tokenize($question);
+
+        expect($tokenizer->tokens)->toBeArray()
+            ->and($tokenizer->tokens)->toHaveCount(4)
+            ->and($tokenizer->tokens[0])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->tokens[0]->substances[0]->element)->toBe('H')
+            ->and($tokenizer->tokens[1])->toBeInstanceOf(AdditionOperator::class)
+            ->and($tokenizer->tokens[2])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->tokens[2]->substances[0]->element)->toBe('O')
+            ->and($tokenizer->tokens[3])->toBeInstanceOf(ReactionOperator::class);
+    });
+
+    test('will correctly organize with reaction operators', function () {
+        $question = "H + O =";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($question);
+
+        $tokenizer->organize();
+
+        /** expected stack from bottom to top: HO+= */
+        expect($tokenizer->stack)->toBeInstanceOf(SplStack::class)
+            ->and($tokenizer->stack)->toHaveCount(4)
+            ->and($tokenizer->stack[0])->toBeInstanceOf(ReactionOperator::class)
+            ->and($tokenizer->stack[1])->toBeInstanceOf(AdditionOperator::class)
+            ->and($tokenizer->stack[2])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[2]->substances[0]->element)->toBe('O')
+            ->and($tokenizer->stack[3])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[3]->substances[0]->element)->toBe('H');
     });
 });
