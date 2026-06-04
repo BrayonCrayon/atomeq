@@ -42,11 +42,11 @@ class Tokenizer
 
     public function organize(): void
     {
-        $operatorHolder = null;
+        $operatorStack = collect();
         foreach ($this->tokens as $token) {
 
-            if (!$operatorHolder && $token instanceof Operator) {
-                $operatorHolder = $token;
+            if ($token instanceof Operator) {
+                $operatorStack->push($token);
                 continue;
             }
 
@@ -55,6 +55,8 @@ class Tokenizer
             }
         }
 
-        $this->stack->push($operatorHolder);
+        $operatorStack->each(function ($operator) {
+            $this->stack->push($operator);
+        });
     }
 }

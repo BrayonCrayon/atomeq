@@ -46,13 +46,13 @@ describe('Tokenizer', function () {
     });
 
     test('will organize when more than two reactants are present', function () {
-        /** expected HOClNa+++ */
         $equation = "H + O + Cl + Na";
         $tokenizer = new Tokenizer();
         $tokenizer->tokenize($equation);
 
         $tokenizer->organize();
 
+        /** expected stack from bottom to top: HOClNa+++ */
         expect($tokenizer->stack)->toBeInstanceOf(SplStack::class)
             ->and($tokenizer->stack)->toHaveCount(7)
             ->and($tokenizer->stack[0])->toBeInstanceOf(AdditionOperator::class)
