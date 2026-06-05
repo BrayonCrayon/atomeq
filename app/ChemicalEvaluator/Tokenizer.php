@@ -31,7 +31,6 @@ class Tokenizer
         }
 
         foreach ($equationParts as $part) {
-
             if (isset($this->operators[$part])) {
                 $this->tokens[] = new $this->operators[$part]($part);
                 continue;
@@ -45,7 +44,6 @@ class Tokenizer
     {
         $operatorStack = collect();
         foreach ($this->tokens as $token) {
-
             if ($token instanceof Operator) {
                 $operatorStack->push($token);
                 continue;
