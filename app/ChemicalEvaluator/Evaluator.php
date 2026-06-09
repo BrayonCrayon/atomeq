@@ -2,6 +2,7 @@
 
 namespace App\ChemicalEvaluator;
 
+use App\ChemicalEvaluator\General\BinaryOperator;
 use App\ChemicalEvaluator\General\Operand;
 use App\ChemicalEvaluator\General\Operator;
 use SplStack;
@@ -21,7 +22,7 @@ class Evaluator
     {
         $evaluationStack = new SplStack();
 
-        for ($i = 0; $i < $this->tokenizer->stack->count(); $i++) {
+        for ($i = $this->tokenizer->stack->count() - 1; $i >= 0; $i--) {
             $token = $this->tokenizer->stack[$i];
 
             if ($token instanceof Operand) {
@@ -29,12 +30,17 @@ class Evaluator
                 continue;
             }
 
-            if ($token instanceof Operator && $evaluationStack->count() >= 2) {
-                $right = $evaluationStack->pop();
-                $left = $evaluationStack->pop();
+            if ($token instanceof Operator) {
+                if ($token instanceof BinaryOperator && $evaluationStack->count() >= 2) {
+                    $right = $evaluationStack->pop();
+                    $left = $evaluationStack->pop();
 
-                $evaluationStack->push($left);
-                $evaluationStack->push($right);
+                    $evaluationStack->push($token->operate($left, $right));
+                } elseif ($token instanceof ReactionOperator && $evaluationStack->count() === 1) {
+                    // Trailing reaction operator with one operand
+                    // We just keep the operand as the result
+                }
+                continue;
             }
         }
 
