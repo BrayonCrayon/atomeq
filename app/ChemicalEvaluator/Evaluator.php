@@ -18,7 +18,7 @@ class Evaluator
         $this->resultStack = new SplStack();
     }
 
-    public function evaluate(): array
+    public function evaluate(): string
     {
         $evaluationStack = new SplStack();
 
@@ -31,24 +31,22 @@ class Evaluator
             }
 
             if ($token instanceof Operator) {
-                if ($token instanceof BinaryOperator && $evaluationStack->count() >= 2) {
+                if ($token instanceof ReactionOperator) {
+                    if ($evaluationStack->count() >= 2) {
+                        $right = $evaluationStack->pop();
+                        // For '=' we return the right side if it's there
+                        $evaluationStack->push($right);
+                    }
+                } elseif ($token instanceof BinaryOperator && $evaluationStack->count() >= 2) {
                     $right = $evaluationStack->pop();
                     $left = $evaluationStack->pop();
 
                     $evaluationStack->push($token->operate($left, $right));
-                } elseif ($token instanceof ReactionOperator && $evaluationStack->count() === 1) {
-                    // Trailing reaction operator with one operand
-                    // We just keep the operand as the result
                 }
                 continue;
             }
         }
 
-        $results = [];
-        for ($i = 0; $i < $evaluationStack->count(); $i++) {
-            $results[] = $evaluationStack[$i];
-        }
-
-        return $results;
+        return $evaluationStack->isEmpty() ? '' : (string) $evaluationStack->pop();
     }
 }

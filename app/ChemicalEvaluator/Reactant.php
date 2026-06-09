@@ -15,9 +15,11 @@ class Reactant extends Operand
 
     const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?/';
 
-    public function __construct(string $reactant)
+    public function __construct(string $reactant = null)
     {
-        $this->parseReactant($reactant);
+        if ($reactant) {
+            $this->parseReactant($reactant);
+        }
     }
 
     public function parseReactant(string $reactant): void
@@ -41,5 +43,14 @@ class Reactant extends Operand
         collect(...$matches)->each(function ($match) {
             $this->substances[] = new Substance($match);
         });
+    }
+
+    public function __toString(): string
+    {
+        $string = $this->coefficient > 1 ? (string) $this->coefficient : '';
+        foreach ($this->substances as $substance) {
+            $string .= $substance;
+        }
+        return $string;
     }
 }

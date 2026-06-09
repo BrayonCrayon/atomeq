@@ -23,4 +23,13 @@ class Substance
             $this->atom = (int) $matches[1];
         }
     }
+
+    public function __toString(): string
+    {
+        $string = $this->element;
+        if ($this->atom > 1) {
+            $string .= "<sub>{$this->atom}</sub>";
+        }
+        return $string;
+    }
 }

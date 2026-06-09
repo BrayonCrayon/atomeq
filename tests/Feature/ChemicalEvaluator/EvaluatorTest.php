@@ -14,9 +14,8 @@ describe('Evaluator', function () {
         $evaluator = new Evaluator($tokenizer);
         $result = $evaluator->evaluate();
 
-        expect($result)->toBeArray()
-            ->and($result)->toHaveCount(1)
-            ->and($result[0])->toBeInstanceOf(Reactant::class);
+        expect($result)->toBeString()
+            ->and($result)->toBe("H<sub>2</sub>O");
     });
 
     test('it can evaluate a simple reaction to determine the product', function () {
@@ -28,13 +27,7 @@ describe('Evaluator', function () {
         $evaluator = new Evaluator($tokenizer);
         $result = $evaluator->evaluate();
 
-        expect($result)->toBeArray()
-            ->and($result)->toHaveCount(1)
-            ->and($result[0])->toBeInstanceOf(Reactant::class)
-            ->and($result[0]->substances)->toHaveCount(2)
-            ->and($result[0]->substances[0]->element)->toBe('H')
-            ->and($result[0]->substances[0]->atom)->toBe(2)
-            ->and($result[0]->substances[1]->element)->toBe('O')
-            ->and($result[0]->substances[1]->atom)->toBe(1);
+        expect($result)->toBeString()
+            ->and($result)->toBe("H<sub>2</sub>O");
     });
 });
