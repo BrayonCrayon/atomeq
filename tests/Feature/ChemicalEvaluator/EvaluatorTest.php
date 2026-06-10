@@ -43,4 +43,69 @@ describe('Evaluator', function () {
         expect($result)->toBeString()
             ->and($result)->toBe("NaCl");
     });
+
+    test('it merges same-element reactants into a single subscripted substance', function () {
+        $equation = "H + H =";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($equation);
+        $tokenizer->organize();
+
+        $evaluator = new Evaluator($tokenizer);
+        $result = $evaluator->evaluate();
+
+        expect($result)->toBeString()
+            ->and($result)->toBe("H<sub>2</sub>");
+    });
+
+    test('it correctly chains three reactants', function () {
+        $equation = "H + H + O =";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($equation);
+        $tokenizer->organize();
+
+        $evaluator = new Evaluator($tokenizer);
+        $result = $evaluator->evaluate();
+
+        expect($result)->toBeString()
+            ->and($result)->toBe("H<sub>2</sub>O");
+    });
+
+    test('it applies a coefficient to a subscripted substance when combining', function () {
+        $equation = "2H<sub>2</sub> + O<sub>2</sub> =";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($equation);
+        $tokenizer->organize();
+
+        $evaluator = new Evaluator($tokenizer);
+        $result = $evaluator->evaluate();
+
+        expect($result)->toBeString()
+            ->and($result)->toBe("H<sub>4</sub>O<sub>2</sub>");
+    });
+
+    test('it applies a coefficient to a non-subscripted substance when combining', function () {
+        $equation = "2Na + Cl =";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($equation);
+        $tokenizer->organize();
+
+        $evaluator = new Evaluator($tokenizer);
+        $result = $evaluator->evaluate();
+
+        expect($result)->toBeString()
+            ->and($result)->toBe("Na<sub>2</sub>Cl");
+    });
+
+    test('it correctly chains four reactants preserving insertion order', function () {
+        $equation = "Na + Cl + H + O =";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($equation);
+        $tokenizer->organize();
+
+        $evaluator = new Evaluator($tokenizer);
+        $result = $evaluator->evaluate();
+
+        expect($result)->toBeString()
+            ->and($result)->toBe("NaClHO");
+    });
 });

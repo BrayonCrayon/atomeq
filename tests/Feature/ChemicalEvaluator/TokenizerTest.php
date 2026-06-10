@@ -1,6 +1,7 @@
 <?php
 
 use App\ChemicalEvaluator\AdditionOperator;
+use App\ChemicalEvaluator\Evaluator;
 use App\ChemicalEvaluator\Reactant;
 use App\ChemicalEvaluator\ReactionOperator;
 use App\ChemicalEvaluator\Tokenizer;
@@ -121,5 +122,21 @@ describe('Tokenizer', function () {
             ->and($tokenizer->stack[3]->substances[0]->element)->toBe('O')
             ->and($tokenizer->stack[4])->toBeInstanceOf(Reactant::class)
             ->and($tokenizer->stack[4]->substances[0]->element)->toBe('H');
+    });
+
+    test('will correctly tokenize an equation with multiple reactants having multiple atoms', function () {
+        $question = "H<sub>2</sub> + H<sub>2</sub>O<sub>2</sub> =";
+        $tokenizer = new Tokenizer();
+
+        $tokenizer->tokenize($question);
+
+        expect($tokenizer->tokens)->toHaveCount(4)
+            ->and($tokenizer->tokens[0])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->tokens[0]->substances[0]->element)->toBe('H')
+            ->and($tokenizer->tokens[1])->toBeInstanceOf(AdditionOperator::class)
+            ->and($tokenizer->tokens[2])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->tokens[2]->substances[0]->element)->toBe('H')
+            ->and($tokenizer->tokens[2]->substances[1]->element)->toBe('O')
+            ->and($tokenizer->tokens[3])->toBeInstanceOf(ReactionOperator::class);
     });
 });

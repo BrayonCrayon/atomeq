@@ -35,6 +35,19 @@ describe('Reactant', function () {
             ->and($target->coefficient)->toBe(2);
     });
 
+    test('will create reactant with multiple substances that each contain more than one atoms', function () {
+        $substance = '2H<sub>2</sub>O<sub>2</sub>';
+
+        $target = new Reactant($substance);
+
+        expect($target->substances)->toHaveCount(2)
+            ->and($target->substances[0]->element)->toBe('H')
+            ->and($target->substances[0]->atom)->toBe(2)
+            ->and($target->substances[1]->element)->toBe('O')
+            ->and($target->substances[1]->atom)->toBe(2)
+            ->and($target->coefficient)->toBe(2);
+    });
+
     test('will throw an exception when no substance is provided', function () {
         $this->expectException(InvalidArgumentException::class);
         new Reactant('2');
