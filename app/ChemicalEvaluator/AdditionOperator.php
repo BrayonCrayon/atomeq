@@ -37,7 +37,6 @@ class AdditionOperator extends BinaryOperator
             }
         }
 
-        ksort($substances);
         $result->substances = array_values($substances);
         $result->coefficient = 1; // Result of addition is a single combined reactant for now
 

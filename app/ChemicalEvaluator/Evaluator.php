@@ -4,7 +4,6 @@ namespace App\ChemicalEvaluator;
 
 use App\ChemicalEvaluator\General\BinaryOperator;
 use App\ChemicalEvaluator\General\Operand;
-use App\ChemicalEvaluator\General\Operator;
 use SplStack;
 
 class Evaluator
@@ -30,20 +29,10 @@ class Evaluator
                 continue;
             }
 
-            if ($token instanceof Operator) {
-                if ($token instanceof ReactionOperator) {
-                    if ($evaluationStack->count() >= 2) {
-                        $right = $evaluationStack->pop();
-                        // For '=' we return the right side if it's there
-                        $evaluationStack->push($right);
-                    }
-                } elseif ($token instanceof BinaryOperator && $evaluationStack->count() >= 2) {
-                    $right = $evaluationStack->pop();
-                    $left = $evaluationStack->pop();
-
-                    $evaluationStack->push($token->operate($left, $right));
-                }
-                continue;
+            if ($token instanceof BinaryOperator && $evaluationStack->count() >= 2) {
+                $right = $evaluationStack->pop();
+                $left = $evaluationStack->pop();
+                $evaluationStack->push($token->operate($left, $right));
             }
         }
 

@@ -18,7 +18,7 @@ describe('Evaluator', function () {
             ->and($result)->toBe("H<sub>2</sub>O");
     });
 
-    test('it can evaluate a simple reaction to determine the product', function () {
+    test('it returns the combined reactants as the product when no explicit product is given', function () {
         $equation = "H<sub>2</sub> + O =";
         $tokenizer = new Tokenizer();
         $tokenizer->tokenize($equation);
@@ -29,5 +29,18 @@ describe('Evaluator', function () {
 
         expect($result)->toBeString()
             ->and($result)->toBe("H<sub>2</sub>O");
+    });
+
+    test('it returns the combined reactants for Na + Cl when no explicit product is given', function () {
+        $equation = "Na + Cl =";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($equation);
+        $tokenizer->organize();
+
+        $evaluator = new Evaluator($tokenizer);
+        $result = $evaluator->evaluate();
+
+        expect($result)->toBeString()
+            ->and($result)->toBe("NaCl");
     });
 });
