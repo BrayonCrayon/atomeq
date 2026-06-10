@@ -52,16 +52,16 @@ describe('Tokenizer', function () {
 
         $tokenizer->organize();
 
-        /** expected stack from bottom to top: HOClNa+++ */
+        /** expected stack from bottom to top: HO+Cl+Na+ */
         expect($tokenizer->stack)->toBeInstanceOf(SplStack::class)
             ->and($tokenizer->stack)->toHaveCount(7)
             ->and($tokenizer->stack[0])->toBeInstanceOf(AdditionOperator::class)
-            ->and($tokenizer->stack[1])->toBeInstanceOf(AdditionOperator::class)
+            ->and($tokenizer->stack[1])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[1]->substances[0]->element)->toBe('Na')
             ->and($tokenizer->stack[2])->toBeInstanceOf(AdditionOperator::class)
             ->and($tokenizer->stack[3])->toBeInstanceOf(Reactant::class)
-            ->and($tokenizer->stack[3]->substances[0]->element)->toBe('Na')
-            ->and($tokenizer->stack[4])->toBeInstanceOf(Reactant::class)
-            ->and($tokenizer->stack[4]->substances[0]->element)->toBe('Cl')
+            ->and($tokenizer->stack[3]->substances[0]->element)->toBe('Cl')
+            ->and($tokenizer->stack[4])->toBeInstanceOf(AdditionOperator::class)
             ->and($tokenizer->stack[5])->toBeInstanceOf(Reactant::class)
             ->and($tokenizer->stack[5]->substances[0]->element)->toBe('O')
             ->and($tokenizer->stack[6])->toBeInstanceOf(Reactant::class)
@@ -100,5 +100,26 @@ describe('Tokenizer', function () {
             ->and($tokenizer->stack[2]->substances[0]->element)->toBe('O')
             ->and($tokenizer->stack[3])->toBeInstanceOf(Reactant::class)
             ->and($tokenizer->stack[3]->substances[0]->element)->toBe('H');
+    });
+
+    test('will correctly organize with a completed equation', function () {
+        $question = "H + O = HO";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($question);
+
+        $tokenizer->organize();
+
+        /** expected stack from bottom to top: H O+HO= */
+        expect($tokenizer->stack)->toBeInstanceOf(SplStack::class)
+            ->and($tokenizer->stack)->toHaveCount(5)
+            ->and($tokenizer->stack[0])->toBeInstanceOf(ReactionOperator::class)
+            ->and($tokenizer->stack[1])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[1]->substances[0]->element)->toBe('H')
+            ->and($tokenizer->stack[1]->substances[1]->element)->toBe('O')
+            ->and($tokenizer->stack[2])->toBeInstanceOf(AdditionOperator::class)
+            ->and($tokenizer->stack[3])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[3]->substances[0]->element)->toBe('O')
+            ->and($tokenizer->stack[4])->toBeInstanceOf(Reactant::class)
+            ->and($tokenizer->stack[4]->substances[0]->element)->toBe('H');
     });
 });

@@ -4,6 +4,7 @@ namespace App\ChemicalEvaluator;
 
 use App\ChemicalEvaluator\General\Operand;
 use App\ChemicalEvaluator\General\Operator;
+use App\ChemicalEvaluator\General\Token;
 use InvalidArgumentException;
 use SplStack;
 
@@ -15,6 +16,11 @@ class Tokenizer
     private array $operators = [
         '+' => AdditionOperator::class,
         '=' => ReactionOperator::class
+    ];
+
+    private array $operatorPrecedence = [
+        ReactionOperator::class => 1,
+        AdditionOperator::class => 2,
     ];
 
     public function __construct()
@@ -40,11 +46,21 @@ class Tokenizer
         }
     }
 
+    public function higherOrEqualPrecedence(Token $left, Token $right): bool
+    {
+        return $this->operatorPrecedence[get_class($left)] >= $this->operatorPrecedence[get_class($right)];
+    }
+
     public function organize(): void
     {
-        $operatorStack = collect();
+        $operatorStack = new SplStack();
         foreach ($this->tokens as $token) {
             if ($token instanceof Operator) {
+
+                while (!$operatorStack->isEmpty() && ($this->higherOrEqualPrecedence($operatorStack->top(), $token))) {
+                    $this->stack->push($operatorStack->pop());
+                }
+
                 $operatorStack->push($token);
                 continue;
             }
@@ -54,8 +70,8 @@ class Tokenizer
             }
         }
 
-        $operatorStack->each(function ($operator) {
+        foreach ($operatorStack as $operator) {
             $this->stack->push($operator);
-        });
+        }
     }
 }
