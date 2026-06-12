@@ -10,6 +10,7 @@ class Substance
     // $element: The name of the substance ex: (H, Na, Cl)
     public int $atom = 1;
     public string $element = '';
+    public int $valency = 0;
 
     public function __construct($substance)
     {
@@ -22,6 +23,8 @@ class Substance
         if (preg_match('/<sub>(\d+)<\/sub>/', $substance, $matches)) {
             $this->atom = (int) $matches[1];
         }
+
+        $this->valency = calculateValency($this->element);
     }
 
     public function __toString(): string

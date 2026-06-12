@@ -15,7 +15,8 @@ class Tokenizer
 
     private array $operators = [
         '+' => AdditionOperator::class,
-        '=' => ReactionOperator::class
+        '=' => ReactionOperator::class,
+        '->' => ReactionOperator::class,
     ];
 
     private array $operatorPrecedence = [

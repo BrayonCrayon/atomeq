@@ -108,4 +108,16 @@ describe('Evaluator', function () {
         expect($result)->toBeString()
             ->and($result)->toBe("NaClHO");
     });
+
+    test('will correctly equate a synthesis equation', function () {
+        $equation = "N<sub>2</sub> + H<sub>2</sub> ->";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($equation);
+        $tokenizer->organize();
+
+        $evaluator = new Evaluator($tokenizer);
+        $result = $evaluator->evaluate();
+
+        expect($result)->toEqual('NH<sub>3</sub>');
+    });
 });
