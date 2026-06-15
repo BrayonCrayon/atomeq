@@ -6,11 +6,12 @@ use InvalidArgumentException;
 
 class Substance
 {
+    use ChemicalHelpers;
     // $atom: The number of atoms of a substance. It is the number following the substance ex: (H2, Na3, Cl7)
     // $element: The name of the substance ex: (H, Na, Cl)
     public int $atom = 1;
     public string $element = '';
-    public int $valency = 0;
+    public int|null $valency = null;
 
     public function __construct($substance)
     {
@@ -24,7 +25,7 @@ class Substance
             $this->atom = (int) $matches[1];
         }
 
-        $this->valency = calculateValency($this->element);
+        $this->valency = $this->valencyLookup($this->element);
     }
 
     public function __toString(): string
