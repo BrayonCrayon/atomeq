@@ -4,6 +4,7 @@
 namespace App\ChemicalEvaluator;
 
 use App\Models\Element;
+use Cache;
 
 
 trait ChemicalHelpers {
@@ -15,7 +16,9 @@ trait ChemicalHelpers {
 
     function valencyLookup(string $element): int
     {
-        $elements = Element::get()->keyBy('symbol');
+        $elements = Cache::get('valency-lookup', function () {
+            return Element::get()->keyBy('symbol');
+        });
 
         return $elements[$element]->valency;
     }
