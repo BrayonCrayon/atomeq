@@ -80,22 +80,27 @@ return new class extends Migration
 
     public function up(): void
     {
-        foreach (self::ELEMENT_VALENCIES as $atomicNumber => $valencies) {
-            $element = DB::table('elements')
-                ->where('atomic_number', $atomicNumber)
-                ->first();
+        $atomNumbers = array_keys(self::ELEMENT_VALENCIES);
 
-            if (!$element) {
-                continue;
-            }
+        $elementsToInsert = DB::table('elements')
+            ->select(['id', 'atomic_number'])
+            ->whereIn('atomic_number', $atomNumbers)
+            ->get()
+            ->mapWithKeys(fn ($element) => [$element->atomic_number => $element->id]);
+
+        $insertArray = [];
+
+        foreach (self::ELEMENT_VALENCIES as $atomicNumber => $valencies) {
 
             foreach ($valencies as $valency) {
-                DB::table('element_valencies')->insert([
-                    'element_id' => $element->id,
+                $insertArray[] = [
+                    'element_id' => $elementsToInsert[$atomicNumber],
                     'valency' => $valency,
-                ]);
+                ];
             }
         }
+
+        DB::table('element_valencies')->insert($insertArray);
     }
 
     public function down(): void
