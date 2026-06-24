@@ -8,7 +8,7 @@ uses(ChemicalHelpers::class);
 
 describe('valencyLookup', function () {
     test('can lookup valency of Nitrogen', function () {
-        $element = Element::factory()->hasValencies(['valency' => 3])->create([
+        Element::factory()->hasValencies(['valency' => 3])->create([
             'name' => 'Nitrogen',
             'symbol' => 'N',
         ]);
@@ -18,6 +18,21 @@ describe('valencyLookup', function () {
         expect($result)->toBeArray();
         expect($result)->toHaveCount(1);
         expect($result[0]['valency'])->toBe(3);
+    });
+
+    test('can retrieve multiple valencies for an element', function () {
+        $element = Element::factory()->hasValencies(3)->create([
+            'name' => 'Nitrogen',
+            'symbol' => 'N',
+        ]);
+
+        $valencies = $element->valencies->toArray();
+
+        $result = $this->valencyLookup('N');
+
+        expect($result)->toBeArray();
+        expect($result)->toHaveCount(3);
+        expect($result)->toEqual($valencies);
     });
 });
 

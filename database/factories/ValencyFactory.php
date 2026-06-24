@@ -14,7 +14,7 @@ class ValencyFactory extends Factory
     {
         return [
             'element_id' => Element::factory(),
-            'valency' => $this->faker->randomNumber(),
+            'valency' => $this->faker->numberBetween(1, 15),
         ];
     }
 }
