@@ -10,8 +10,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('element_valencies', function (Blueprint $table) {
+            $table->id();
             $table->foreignIdFor(Element::class)->index();
             $table->smallInteger('valency');
+            $table->timestamps();
         });
 
         $existingValencyRows = DB::table('elements')

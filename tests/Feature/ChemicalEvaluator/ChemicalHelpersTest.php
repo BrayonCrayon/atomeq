@@ -2,18 +2,22 @@
 
 use App\ChemicalEvaluator\ChemicalHelpers;
 use App\Models\Element;
+use App\Models\Valency;
 
 uses(ChemicalHelpers::class);
 
 describe('valencyLookup', function () {
     test('can lookup valency of Nitrogen', function () {
-        Element::factory()->create([
+        $element = Element::factory()->hasValencies(['valency' => 3])->create([
             'name' => 'Nitrogen',
             'symbol' => 'N',
-            'valency' => 3
         ]);
+
         $result = $this->valencyLookup('N');
-        expect($result)->toBe(3);
+
+        expect($result)->toBeArray();
+        expect($result)->toHaveCount(1);
+        expect($result[0]['valency'])->toBe(3);
     });
 });
 
