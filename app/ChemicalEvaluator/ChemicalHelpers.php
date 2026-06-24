@@ -4,8 +4,8 @@
 namespace App\ChemicalEvaluator;
 
 use App\Models\Element;
-use App\Models\Valency;
 use Cache;
+use Illuminate\Support\Collection;
 
 
 trait ChemicalHelpers {
@@ -15,17 +15,13 @@ trait ChemicalHelpers {
         return 0;
     }
 
-    function valencyLookup(string $element): array
+    function valencyLookup(string $element): Collection
     {
-        $elements = Cache::get('valency-lookup', function () {
-            return Element::get()->keyBy('symbol');
+        $elements = Cache::remember('valency-lookup', 3600, function () {
+            return Element::get()->load('valencies')
+                ->keyBy('symbol');
         });
 
-        $valencies = Valency::query()
-            ->where('element_id', $elements[$element]->id)
-            ->get()
-            ->toArray();
-
-        return $valencies;
+        return $elements[$element]->valencies;
     }
 }

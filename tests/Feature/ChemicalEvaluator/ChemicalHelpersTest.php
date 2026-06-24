@@ -15,9 +15,8 @@ describe('valencyLookup', function () {
 
         $result = $this->valencyLookup('N');
 
-        expect($result)->toBeArray();
         expect($result)->toHaveCount(1);
-        expect($result[0]['valency'])->toBe(3);
+        expect($result[0]->valency)->toBe(3);
     });
 
     test('can retrieve multiple valencies for an element', function () {
@@ -26,11 +25,10 @@ describe('valencyLookup', function () {
             'symbol' => 'N',
         ]);
 
-        $valencies = $element->valencies->toArray();
+        $valencies = $element->valencies;
 
         $result = $this->valencyLookup('N');
 
-        expect($result)->toBeArray();
         expect($result)->toHaveCount(3);
         expect($result)->toEqual($valencies);
     });
