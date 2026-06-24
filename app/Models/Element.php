@@ -49,6 +49,11 @@ class Element extends Model
         return $this->belongsTo(Type::class);
     }
 
+    public function valencies(): BelongsToMany
+    {
+        return $this->belongsToMany(Valency::class);
+    }
+
     public function discoverers(): BelongsToMany
     {
         return $this->belongsToMany(Discoverer::class, ElementDiscovery::class)->withPivot('year');
