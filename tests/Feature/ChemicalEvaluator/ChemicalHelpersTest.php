@@ -36,20 +36,23 @@ describe('valencyLookup', function () {
 
 describe('calculateValency', function () {
    test('will calculate N valency with H', function () {
-        $Scandium = Element::factory()->create([
-            'name' => 'Scandium',
-            'symbol' => 'Sc',
-            'valency' => null,
+        $iron = Element::factory()->create([
+            'name' => 'Iron',
+            'symbol' => 'Fe',
             'atomic_number' => 21
         ]);
-        $oxygen = Element::factory()->create([
+        Valency::factory()->count(2)->for($iron)->sequence(
+            ['valency' => 2],
+            ['valency' => 3]
+        )->create();
+        $oxygen = Element::factory()->hasValencies([ 'valency' => 2 ])->create([
             'name' => 'Oxygen',
             'symbol' => 'O',
-            'valency' => 2,
             'atomic_number' => 8
         ]);
 
-        $result = $this->calculateValency($element, $element);
-        expect($result)->toBe(4);
+        $result = $this->calculateValency($iron->symbol, $oxygen->symbol);
+
+        expect($result)->toBe(1);
     });
 });
