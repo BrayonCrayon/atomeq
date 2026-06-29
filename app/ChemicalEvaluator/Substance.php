@@ -2,6 +2,7 @@
 
 namespace App\ChemicalEvaluator;
 
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
 class Substance
@@ -11,7 +12,7 @@ class Substance
     // $element: The name of the substance ex: (H, Na, Cl)
     public int $atom = 1;
     public string $element = '';
-    public int|null $valency = null;
+    public Collection|null $valencies = null;
 
     public function __construct($substance)
     {
@@ -25,7 +26,7 @@ class Substance
             $this->atom = (int) $matches[1];
         }
 
-        $this->valency = $this->valencyLookup($this->element);
+        $this->valencies = $this->valencyLookup($this->element);
     }
 
     public function __toString(): string

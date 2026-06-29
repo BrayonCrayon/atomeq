@@ -1,6 +1,7 @@
 <?php
 
 use App\ChemicalEvaluator\ChemicalHelpers;
+use App\ChemicalEvaluator\Substance;
 use App\Models\Element;
 use App\Models\Valency;
 
@@ -35,7 +36,7 @@ describe('valencyLookup', function () {
 });
 
 describe('calculateValency', function () {
-   test('will calculate N valency with H', function () {
+   test('will calculate Fe valency with O', function () {
         $iron = Element::factory()->create([
             'name' => 'Iron',
             'symbol' => 'Fe',
@@ -45,14 +46,41 @@ describe('calculateValency', function () {
             ['valency' => 2],
             ['valency' => 3]
         )->create();
-        $oxygen = Element::factory()->hasValencies([ 'valency' => 2 ])->create([
+        Element::factory()->hasValencies([ 'valency' => 2 ])->create([
             'name' => 'Oxygen',
             'symbol' => 'O',
             'atomic_number' => 8
         ]);
 
-        $result = $this->calculateValency($iron->symbol, $oxygen->symbol);
+       $feSubstance = new Substance('Fe<sub>2</sub>');
+       $oxSubstance = new Substance('O');
 
-        expect($result)->toBe(1);
+       $result = $this->calculateValency($oxSubstance, $feSubstance);
+
+       expect($result)->toBe(1);
+    });
+
+   test('will calculate O valency with Fe', function() {
+       $iron = Element::factory()->create([
+           'name' => 'Iron',
+           'symbol' => 'Fe',
+           'atomic_number' => 21
+       ]);
+       Valency::factory()->count(2)->for($iron)->sequence(
+           ['valency' => 2],
+           ['valency' => 3]
+       )->create();
+       Element::factory()->hasValencies([ 'valency' => 2 ])->create([
+           'name' => 'Oxygen',
+           'symbol' => 'O',
+           'atomic_number' => 8
+       ]);
+
+       $feSubstance = new Substance('Fe<sub>2</sub>');
+       $oxSubstance = new Substance('O');
+
+       $result = $this->calculateValency($feSubstance, $oxSubstance);
+
+       expect($result)->toBe(1);
     });
 });

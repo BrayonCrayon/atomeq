@@ -9,19 +9,13 @@ use Illuminate\Support\Collection;
 
 
 trait ChemicalHelpers {
-    function calculateValency(string $leftElement, string $rightElement): int
+    function calculateValency(Substance $leftSubstance, Substance $rightSubstance): int
     {
-        // TODO: Get valency from element valence value (8 - valence);
-        $possibleLeftValencies = $this->valencyLookup($leftElement);
-        $possibleRightValencies = $this->valencyLookup($rightElement);
+        $leftLowestValency = $leftSubstance->valencies->min('valency');
+        $rightLowestValency = $rightSubstance->valencies->min('valency');
+        $atomsOfLeft = gmp_strval($rightLowestValency / (gmp_gcd($leftLowestValency, $rightLowestValency)));
 
-        /**
-         * atoms of A = v_b / GCD(vₐ, v_b)
-         * atoms of B = vₐ / GCD(vₐ, v_b)
-         */
-        $atomsOfA = gmp_strval($possibleRightValencies->first()->valency / (gmp_gcd($possibleLeftValencies->first()->valency, $possibleRightValencies->first()->valency)));
-
-        return (int)$atomsOfA;
+        return (int)$atomsOfLeft;
     }
 
     function valencyLookup(string $element): Collection
