@@ -42,20 +42,19 @@ describe('calculateValency', function () {
             'symbol' => 'Fe',
             'atomic_number' => 21
         ]);
-        Valency::factory()->count(2)->for($iron)->sequence(
+        $ironValency = Valency::factory()->count(2)->for($iron)->sequence(
             ['valency' => 2],
             ['valency' => 3]
-        )->create();
-        Element::factory()->hasValencies([ 'valency' => 2 ])->create([
+        )->create()->first();
+
+        $oxygen = Element::factory()->hasValencies([ 'valency' => 2 ])->create([
             'name' => 'Oxygen',
             'symbol' => 'O',
             'atomic_number' => 8
         ]);
+        $oxygenValency = $oxygen->valencies->first();
 
-       $feSubstance = new Substance('Fe<sub>2</sub>');
-       $oxSubstance = new Substance('O');
-
-       $result = $this->calculateValency($oxSubstance, $feSubstance);
+       $result = $this->calculateValency($oxygenValency->valency, $ironValency->valency);
 
        expect($result)->toBe(1);
     });
@@ -66,21 +65,19 @@ describe('calculateValency', function () {
            'symbol' => 'Fe',
            'atomic_number' => 21
        ]);
-       Valency::factory()->count(2)->for($iron)->sequence(
+       $ironValency = Valency::factory()->count(2)->for($iron)->sequence(
            ['valency' => 2],
            ['valency' => 3]
-       )->create();
-       Element::factory()->hasValencies([ 'valency' => 2 ])->create([
+       )->create()->last();
+       $oxygen = Element::factory()->hasValencies([ 'valency' => 2 ])->create([
            'name' => 'Oxygen',
            'symbol' => 'O',
            'atomic_number' => 8
        ]);
+       $oxygenValency = $oxygen->valencies->first();
 
-       $feSubstance = new Substance('Fe<sub>2</sub>');
-       $oxSubstance = new Substance('O');
+       $result = $this->calculateValency($ironValency->valency, $oxygenValency->valency);
 
-       $result = $this->calculateValency($feSubstance, $oxSubstance);
-
-       expect($result)->toBe(1);
+       expect($result)->toBe(2);
     });
 });

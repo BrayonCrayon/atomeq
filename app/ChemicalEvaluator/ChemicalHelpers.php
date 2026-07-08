@@ -9,11 +9,9 @@ use Illuminate\Support\Collection;
 
 
 trait ChemicalHelpers {
-    function calculateValency(Substance $leftSubstance, Substance $rightSubstance): int
+    function calculateValency(int $leftValency, int $rightValency): int
     {
-        $leftLowestValency = $leftSubstance->valencies->min('valency');
-        $rightLowestValency = $rightSubstance->valencies->min('valency');
-        $atomsOfLeft = gmp_strval($rightLowestValency / (gmp_gcd($leftLowestValency, $rightLowestValency)));
+        $atomsOfLeft = gmp_strval($rightValency / (gmp_gcd($leftValency, $rightValency)));
 
         return (int)$atomsOfLeft;
     }
