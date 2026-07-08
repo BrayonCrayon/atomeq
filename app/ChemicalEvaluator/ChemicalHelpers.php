@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 
 
 trait ChemicalHelpers {
-    function calculateValency(int $leftValency, int $rightValency): int
+    function calculateAtom(int $leftValency, int $rightValency): int
     {
         $atomsOfLeft = gmp_strval($rightValency / (gmp_gcd($leftValency, $rightValency)));
 

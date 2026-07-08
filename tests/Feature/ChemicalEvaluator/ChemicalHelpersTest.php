@@ -35,7 +35,7 @@ describe('valencyLookup', function () {
     });
 });
 
-describe('calculateValency', function () {
+describe('calculateAtom', function () {
    test('will calculate Fe valency with O', function () {
         $iron = Element::factory()->create([
             'name' => 'Iron',
@@ -54,7 +54,7 @@ describe('calculateValency', function () {
         ]);
         $oxygenValency = $oxygen->valencies->first();
 
-       $result = $this->calculateValency($oxygenValency->valency, $ironValency->valency);
+       $result = $this->calculateAtom($oxygenValency->valency, $ironValency->valency);
 
        expect($result)->toBe(1);
     });
@@ -76,7 +76,7 @@ describe('calculateValency', function () {
        ]);
        $oxygenValency = $oxygen->valencies->first();
 
-       $result = $this->calculateValency($ironValency->valency, $oxygenValency->valency);
+       $result = $this->calculateAtom($ironValency->valency, $oxygenValency->valency);
 
        expect($result)->toBe(2);
     });

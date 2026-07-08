@@ -33,23 +33,26 @@ test('will correctly assign atoms based on their valency', function () {
 
 test('will correctly assign atoms based on their valency when multiple valencies is available and a specific valency is provided', function () {
     Cache::flush();
-    $ironElement = Element::factory()->create(['name' => 'Iron', 'symbol' => 'Fe']);
+    $ironElement = Element::factory()->create(['name' => 'Copper', 'symbol' => 'Cu']);
     Valency::factory()->for($ironElement)
         ->sequence(
-            ['valency' => 2],
-            ['valency' => 3]
+            ['valency' => 1],
+            ['valency' => 2]
         )->create();
     $oxygenElement = Element::factory()->create(['name' => 'Oxygen', 'symbol' => 'O']);
     Valency::factory()->for($oxygenElement)
         ->sequence(['valency' => 2])->create();
 
-    $left = new Reactant('Fe<sub>3</sub>');
-    $right = new Reactant('O<sub>2</sub>');
+    // Cu + O
+    // Cu2O
+    $left = new Reactant('Cu');
+    $right = new Reactant('O');
 
     $additionOperator = new AdditionOperator();
     $result = $additionOperator->operate($left, $right);
 
     expect($result->substances)->toHaveCount(2);
     expect($result->substances[0]->atom)->toBe(2);
-    expect($result->substances[1]->atom)->toBe(3);
+    expect($result->substances[1]->atom)->toBe(1);
+    expect($result->__toString())->toBe("Cu<sub>2</sub>O");
 });
