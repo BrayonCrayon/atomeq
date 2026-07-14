@@ -13,8 +13,8 @@ Gap analysis comparing `AdditonOperator.md` spec against the current codebase, w
 | `calculateAtom` criss-cross with GCD reduction | ✅ Done |
 | Multi-valency in DB (`element_valencies` table) | ✅ Done |
 | `electronegativity` field on `elements` table | ✅ Done |
-| `is_diatomic` field on `elements` | ❌ Missing |
-| `activity_rank` field on `elements` | ❌ Missing |
+| `is_diatomic` field on `elements` | ✅ Done |
+| `activity_rank` field on `elements` | ✅ Done |
 | Polyatomic ion interception | ❌ Missing |
 | Electronegativity-based charge assignment | ❌ Missing |
 | Variable valency for transition metals | ❌ Missing |
@@ -24,19 +24,20 @@ Gap analysis comparing `AdditonOperator.md` spec against the current codebase, w
 
 ---
 
-## Step 1 — Add missing DB columns to `elements`
+## Step 1 — Add missing DB columns to `elements` ✅ Completed (2026-07-14)
 
 Two fields from the spec are completely absent:
 
 - `is_diatomic` (boolean, default `false`) — required for the HNFOICBr rule
 - `activity_rank` (integer, nullable) — required for the activity series feasibility check
 
-**Files to touch:**
-- New migration adding both columns
-- `Element::$fillable`
-- A seeder or follow-up migration to populate known values:
-  - `is_diatomic = true` → H, N, F, O, I, Cl, Br
-  - `activity_rank` → Li=50, Na=45, Mg=40, Al=35, Zn=25, Fe=20, Ni=18, Sn=15, Pb=12, H=10, Cu=5, Ag=3, Au=1 (approximate ranking, highest = most reactive)
+**Completed:**
+- ✅ Migration adding both columns (`is_diatomic`, `activity_rank`)
+- ✅ Follow-up migration populating `is_diatomic = true` → H, N, F, O, I, Cl, Br
+- ✅ Follow-up migration populating `activity_rank` values (Li=50, Na=45, Mg=40, Al=35, Zn=25, Fe=20, Ni=18, Sn=15, Pb=12, H=10, Cu=5, Ag=3, Au=1)
+
+**Still needed:**
+- ❌ Add `is_diatomic` and `activity_rank` to `Element::$fillable`
 
 ---
 
