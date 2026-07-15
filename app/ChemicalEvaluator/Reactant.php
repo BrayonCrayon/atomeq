@@ -3,6 +3,7 @@
 namespace App\ChemicalEvaluator;
 
 use App\ChemicalEvaluator\General\Operand;
+use App\Models\PolyatomicIon;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -24,6 +25,7 @@ class Reactant extends Operand
 
     public function parseReactant(string $reactant): void
     {
+
         if (preg_match('/^\d+/', $reactant, $matches)) {
             $this->coefficient = (int) $matches[0];
         }
@@ -31,6 +33,14 @@ class Reactant extends Operand
         $substancesStr = Str::after($reactant, $this->coefficient);
         if (! $substancesStr) {
             throw new InvalidArgumentException('Reactant must contain at least one substance');
+        }
+
+        $reactantString = preg_replace('/<\/?sub>/', '', $substancesStr);
+        $polyatomicIon = PolyatomicIon::query()->where('symbol', $reactantString)->first();
+
+        if ($polyatomicIon) {
+            $this->substances[] = new Substance($substancesStr, true);
+            return;
         }
 
         $leftOvers = preg_replace(self::SUBSTANCE_REGEX, '', $substancesStr);

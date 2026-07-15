@@ -59,4 +59,18 @@ describe('Reactant', function () {
 
         new Reactant($substance);
     });
+
+    test('will identify a polyatomic ion', function () {
+        $substance = 'NH<sub>4</sub>';
+
+        $target = new Reactant($substance);
+
+        expect($target->substances)->toHaveCount(1)
+            ->and($target->substances[0]->element)->toEqual('NH')
+            ->and($target->substances[0]->polyatomicSubstances)->toHaveCount(2)
+            ->and($target->substances[0]->polyatomicSubstances[0]->element)->toEqual('N')
+            ->and($target->substances[0]->polyatomicSubstances[0]->atom)->toEqual(1)
+            ->and($target->substances[0]->polyatomicSubstances[1]->element)->toEqual('H')
+            ->and($target->substances[0]->polyatomicSubstances[1]->atom)->toEqual(4);
+    });
 });

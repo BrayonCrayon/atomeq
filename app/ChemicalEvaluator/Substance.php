@@ -8,13 +8,21 @@ use InvalidArgumentException;
 class Substance
 {
     use ChemicalHelpers;
+    const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?/';
+
     // $atom: The number of atoms of a substance. It is the number following the substance ex: (H2, Na3, Cl7)
     // $element: The name of the substance ex: (H, Na, Cl)
     public int $atom = 1;
     public string $element = '';
+    public Collection|null $polyatomicSubstances = null;
     public Collection|null $valencies = null;
 
-    public function __construct($substance)
+    public function __construct($substance, public bool $isPolyatomic = false)
+    {
+        $this->isPolyatomic ? $this->parsePolyatomicIon($substance) : $this->parseSubstance($substance);
+    }
+
+    public function parseSubstance(string $substance): void
     {
         if (preg_match('/[a-zA-Z]+/', $substance, $matches)) {
             $this->element = $matches[0];
@@ -27,6 +35,27 @@ class Substance
         }
 
         $this->valencies = $this->valencyLookup($this->element);
+    }
+
+    public function parsePolyatomicIon(string $substance): void
+    {
+        $leftOvers = preg_replace(self::SUBSTANCE_REGEX, '', $substance);
+
+        if ($leftOvers) {
+            throw new InvalidArgumentException('Reactant must contain only substance symbols');
+        }
+
+        if (preg_match('/[a-zA-Z]+/', $substance, $matches)) {
+            $this->element = $matches[0];
+        } else {
+            throw new InvalidArgumentException('Substance must be a valid element.');
+        }
+
+        preg_match_all(self::SUBSTANCE_REGEX, $substance, $matches);
+        $this->polyatomicSubstances = collect();
+        collect(...$matches)->each(function ($match) {
+            $this->polyatomicSubstances->add(new Substance($match));
+        });
     }
 
     public function __toString(): string

@@ -23,6 +23,10 @@ trait ChemicalHelpers {
                 ->keyBy('symbol');
         });
 
+        if (!isset($elements[$element])) {
+            return collect();
+        }
+
         return $elements[$element]->valencies;
     }
 }
