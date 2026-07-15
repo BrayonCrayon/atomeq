@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('polyatomic_ions', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
             $table->string('symbol');
             $table->integer('charge');
             $table->timestamps();
