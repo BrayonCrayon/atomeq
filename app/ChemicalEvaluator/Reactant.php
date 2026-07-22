@@ -25,7 +25,6 @@ class Reactant extends Operand
 
     public function parseReactant(string $reactant): void
     {
-
         if (preg_match('/^\d+/', $reactant, $matches)) {
             $this->coefficient = (int) $matches[0];
         }
@@ -35,24 +34,38 @@ class Reactant extends Operand
             throw new InvalidArgumentException('Reactant must contain at least one substance');
         }
 
-        $reactantString = preg_replace('/<\/?sub>/', '', $substancesStr);
-        $polyatomicIon = PolyatomicIon::query()->where('symbol', $reactantString)->first();
-
-        if ($polyatomicIon) {
-            $this->substances[] = new Substance($substancesStr, true);
-            return;
-        }
-
-        $leftOvers = preg_replace(self::SUBSTANCE_REGEX, '', $substancesStr);
-
-        if ($leftOvers) {
+        $isMalformed = preg_replace(self::SUBSTANCE_REGEX, '', $substancesStr);
+        if ($isMalformed) {
             throw new InvalidArgumentException('Reactant must contain only substance symbols');
         }
 
-        preg_match_all(self::SUBSTANCE_REGEX, $reactant, $matches);
-        collect(...$matches)->each(function ($match) {
-            $this->substances[] = new Substance($match);
-        });
+        $polyatomicPattern = PolyatomicIon::query()->get()
+            ->map(function (PolyatomicIon $ion) {
+                return Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', "$ion->symbol");
+            })->join('|');
+
+        $polyatomicRegex = "/(?:$polyatomicPattern)/";
+
+        preg_match_all($polyatomicRegex, $substancesStr, $matches, PREG_OFFSET_CAPTURE);
+
+        dd($matches);
+//        $reactantString = preg_replace('/<\/?sub>/', '', $substancesStr);
+//        $ions = PolyatomicIon::query()->get();
+//
+//        $polyatomicIon = $ions->first(function (PolyatomicIon $ion) use ($reactantString) {
+//            return Str::contains($reactantString, [$ion->symbol]);
+//        });
+//
+//        if ($polyatomicIon) {
+//            $ionInSubstanceNotation = preg_replace('/(?<=[A-Za-z)])(\d+)/', '<sub>$1</sub>', $polyatomicIon->symbol);
+//            $substancesStr = Str::replaceFirst($ionInSubstanceNotation, '', $substancesStr);
+//            $this->substances[] = new Substance($ionInSubstanceNotation, true);
+//        }
+//
+//        preg_match_all(self::SUBSTANCE_REGEX, $substancesStr, $matches);
+//        collect(...$matches)->each(function ($match) {
+//            $this->substances[] = new Substance($match);
+//        });
     }
 
     public function __toString(): string

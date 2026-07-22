@@ -73,4 +73,20 @@ describe('Reactant', function () {
             ->and($target->substances[0]->polyatomicSubstances[1]->element)->toEqual('H')
             ->and($target->substances[0]->polyatomicSubstances[1]->atom)->toEqual(4);
     });
+
+    test('will identify a substance with a polyatomic ion', function () {
+       $substance = 'MgSO<sub>4</sub>';
+
+       $target = new Reactant($substance);
+
+        expect($target->substances)->toHaveCount(2)
+            ->and($target->substances[0]->element)->toEqual('Mg')
+            ->and($target->substances[0]->polyatomicSubstances)->toHaveCount(0)
+            ->and($target->substances[1]->element)->toEqual('SO')
+            ->and($target->substances[1]->polyatomicSubstances)->toHaveCount(2)
+            ->and($target->substances[1]->polyatomicSubstances[0]->element)->toEqual('S')
+            ->and($target->substances[1]->polyatomicSubstances[0]->atom)->toEqual(1)
+            ->and($target->substances[1]->polyatomicSubstances[1]->element)->toEqual('O')
+            ->and($target->substances[1]->polyatomicSubstances[1]->atom)->toEqual(4);
+    });
 });
