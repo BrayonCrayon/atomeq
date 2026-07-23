@@ -40,32 +40,21 @@ class Reactant extends Operand
         }
 
         $polyatomicPattern = PolyatomicIon::query()->get()
-            ->map(function (PolyatomicIon $ion) {
-                return Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', "$ion->symbol");
-            })->join('|');
+            ->map(fn(PolyatomicIon $ion) => Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', $ion->symbol))
+            ->join('|');
 
-        $polyatomicRegex = "/(?:$polyatomicPattern)/";
+        $parts = preg_split("/($polyatomicPattern)/", $substancesStr, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
 
-        preg_match_all($polyatomicRegex, $substancesStr, $matches, PREG_OFFSET_CAPTURE);
-
-        dd($matches);
-//        $reactantString = preg_replace('/<\/?sub>/', '', $substancesStr);
-//        $ions = PolyatomicIon::query()->get();
-//
-//        $polyatomicIon = $ions->first(function (PolyatomicIon $ion) use ($reactantString) {
-//            return Str::contains($reactantString, [$ion->symbol]);
-//        });
-//
-//        if ($polyatomicIon) {
-//            $ionInSubstanceNotation = preg_replace('/(?<=[A-Za-z)])(\d+)/', '<sub>$1</sub>', $polyatomicIon->symbol);
-//            $substancesStr = Str::replaceFirst($ionInSubstanceNotation, '', $substancesStr);
-//            $this->substances[] = new Substance($ionInSubstanceNotation, true);
-//        }
-//
-//        preg_match_all(self::SUBSTANCE_REGEX, $substancesStr, $matches);
-//        collect(...$matches)->each(function ($match) {
-//            $this->substances[] = new Substance($match);
-//        });
+        foreach ($parts as $part) {
+            if (preg_match("/^(?:$polyatomicPattern)$/", $part)) {
+                $this->substances[] = new Substance($part, true);
+            } else {
+                preg_match_all(self::SUBSTANCE_REGEX, $part, $matches);
+                foreach ($matches[0] as $match) {
+                    $this->substances[] = new Substance($match);
+                }
+            }
+        }
     }
 
     public function __toString(): string

@@ -34,6 +34,7 @@ class Substance
             $this->atom = (int) $matches[1];
         }
 
+        $this->polyatomicSubstances = collect();
         $this->valencies = $this->valencyLookup($this->element);
     }
 

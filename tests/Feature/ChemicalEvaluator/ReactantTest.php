@@ -75,9 +75,8 @@ describe('Reactant', function () {
     });
 
     test('will identify a substance with a polyatomic ion', function () {
-       $substance = 'MgSO<sub>4</sub>';
-
-       $target = new Reactant($substance);
+        $substance = 'MgSO<sub>4</sub>';
+        $target = new Reactant($substance);
 
         expect($target->substances)->toHaveCount(2)
             ->and($target->substances[0]->element)->toEqual('Mg')
