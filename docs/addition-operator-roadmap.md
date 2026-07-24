@@ -15,7 +15,7 @@ Gap analysis comparing `AdditonOperator.md` spec against the current codebase, w
 | `electronegativity` field on `elements` table | ✅ Done |
 | `is_diatomic` field on `elements` | ✅ Done |
 | `activity_rank` field on `elements` | ✅ Done |
-| Polyatomic ion interception | ❌ Missing |
+| Polyatomic ion interception | ✅ Done |
 | Electronegativity-based charge assignment | ❌ Missing |
 | Variable valency for transition metals | ❌ Missing |
 | Activity series feasibility check | ❌ Missing |
@@ -36,30 +36,22 @@ Two fields from the spec are completely absent:
 - ✅ Follow-up migration populating `is_diatomic = true` → H, N, F, O, I, Cl, Br
 - ✅ Follow-up migration populating `activity_rank` values (Li=50, Na=45, Mg=40, Al=35, Zn=25, Fe=20, Ni=18, Sn=15, Pb=12, H=10, Cu=5, Ag=3, Au=1)
 
-**Still needed:**
-- ❌ Add `is_diatomic` and `activity_rank` to `Element::$fillable`
+- ✅ `is_diatomic` and `activity_rank` added to `Element::$fillable`
 
 ---
 
-## Step 2 — Polyatomic ion interception in `Reactant` parsing (Rule II)
+## Step 2 — Polyatomic ion interception in `Reactant` parsing (Rule II) ✅ Completed
 
-The tokenizer currently splits `MgSO4` into `Mg`, `S`, `O4` individually. The spec requires intercepting known polyatomic clusters (SO4, NH4, OH, NO3, etc.) as a single charged unit **before** element-by-element parsing.
+The tokenizer previously split `MgSO4` into `Mg`, `S`, `O4` individually. The spec required intercepting known polyatomic clusters (SO4, NH4, OH, NO3, etc.) as a single charged unit **before** element-by-element parsing.
 
-**Action:** Add a hardcoded `POLYATOMIC_IONS` map (formula → charge) to `ChemicalHelpers`. Update `Reactant::parseReactant()` to scan for polyatomic substrings first, extract them as a single `Substance` with a known fixed charge, then parse remaining elements normally.
+**Completed:**
+- ✅ `polyatomic_ions` DB table + seeder with all known ions
+- ✅ `Reactant::parseReactant()` now queries `PolyatomicIon` model to build a dynamic regex pattern
+- ✅ `preg_split()` with `PREG_SPLIT_DELIM_CAPTURE` splits the substance string on polyatomic matches, capturing them as delimiters
+- ✅ Matched polyatomic parts are passed to `new Substance($part, true)` (flagged as polyatomic); remaining parts are parsed element-by-element as before
+- ✅ Subscript normalization (`\d+` → `<sub>$1</sub>`) applied to ion symbols before pattern matching
 
-**Files to touch:** `ChemicalHelpers.php`, `Reactant.php`, `Substance.php`
-
-Reference map from spec:
-
-| Ion | Charge |
-|-----|--------|
-| NH4 | +1 |
-| OH | -1 |
-| NO3 | -1 |
-| SO4 | -2 |
-| CO3 | -2 |
-| PO4 | -3 |
-| *(full list in AdditonOperator.md §3 Rule II)* | |
+**Files touched:** `Reactant.php`, `Substance.php`, `PolyatomicIon.php` (model), migration + seeder
 
 ---
 

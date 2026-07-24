@@ -44,7 +44,9 @@ describe('Reactant', function () {
             ->and($target->substances[0]->element)->toBe('H')
             ->and($target->substances[0]->atom)->toBe(2)
             ->and($target->substances[1]->element)->toBe('O')
-            ->and($target->substances[1]->atom)->toBe(2)
+            ->and($target->substances[1]->polyatomicSubstances)->toHaveCount(1)
+            ->and($target->substances[1]->polyatomicSubstances->first()->element)->toBe('O')
+            ->and($target->substances[1]->polyatomicSubstances->first()->atom)->toBe(2)
             ->and($target->coefficient)->toBe(2);
     });
 

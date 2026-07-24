@@ -38,6 +38,8 @@ class Element extends Model
         'specific_heat',
         'shells',
         'valence',
+        'is_diatomic',
+        'activity_rank'
     ];
 
     public function state(): BelongsTo

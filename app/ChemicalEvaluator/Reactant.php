@@ -4,6 +4,7 @@ namespace App\ChemicalEvaluator;
 
 use App\ChemicalEvaluator\General\Operand;
 use App\Models\PolyatomicIon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -12,12 +13,14 @@ class Reactant extends Operand
     // $coefficient: The coefficient of a substance. How many molecules it has, and is the number preceding the substance ex: (2H2O, 2Na, 2HCl)
     // $substances: The amount of substance(s) containing their atoms and molecules ex: (H2O, Na, HCl)
     public int $coefficient = 1;
-    public array $substances = [];
+    /** @var Collection<int, Substance> */
+    public Collection $substances;
 
     const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?/';
 
     public function __construct(string $reactant = null)
     {
+        $this->substances = collect();
         if ($reactant) {
             $this->parseReactant($reactant);
         }
@@ -43,15 +46,15 @@ class Reactant extends Operand
             ->map(fn(PolyatomicIon $ion) => Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', $ion->symbol))
             ->join('|');
 
-        $parts = preg_split("/($polyatomicPattern)/", $substancesStr, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+        $substanceParts = preg_split("/($polyatomicPattern)/", $substancesStr, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
 
-        foreach ($parts as $part) {
-            if (preg_match("/^(?:$polyatomicPattern)$/", $part)) {
-                $this->substances[] = new Substance($part, true);
+        foreach ($substanceParts as $substance) {
+            if (preg_match("/^(?:$polyatomicPattern)$/", $substance)) {
+                $this->substances->push(new Substance($substance, true));
             } else {
-                preg_match_all(self::SUBSTANCE_REGEX, $part, $matches);
-                foreach ($matches[0] as $match) {
-                    $this->substances[] = new Substance($match);
+                preg_match_all(self::SUBSTANCE_REGEX, $substance, $substanceMatches);
+                foreach ($substanceMatches[0] as $item) {
+                    $this->substances->push(new Substance($item));
                 }
             }
         }
