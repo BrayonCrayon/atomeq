@@ -16,7 +16,7 @@ Gap analysis comparing `AdditonOperator.md` spec against the current codebase, w
 | `is_diatomic` field on `elements` | ✅ Done |
 | `activity_rank` field on `elements` | ✅ Done |
 | Polyatomic ion interception | ✅ Done |
-| Electronegativity-based charge assignment | ❌ Missing |
+| Electronegativity-based charge assignment | ✅ Done |
 | Variable valency for transition metals | ❌ Missing |
 | Activity series feasibility check | ❌ Missing |
 | Diatomic enforcement on ejected products | ❌ Missing |
@@ -55,24 +55,18 @@ The tokenizer previously split `MgSO4` into `Mg`, `S`, `O4` individually. The sp
 
 ---
 
-## Step 3 — Charge assignment via electronegativity (Rule I) 🔄 In Progress
-
-`Substance` and `AdditionOperator` currently have no concept of cation/anion polarity. The spec requires: within a compound, higher electronegativity → negative (anion), lower → positive (cation).
+## Step 3 — Charge assignment via electronegativity (Rule I) ✅ Completed
 
 **Completed:**
-- ✅ `?float $charge` property added to `Substance` (null = unknown)
-- ✅ Polyatomic ion charge assigned from `polyatomic_ions.charge` DB column — electronegativity skipped for these (correct per spec)
-- ✅ Raw `electronegativity` value stored in `$charge` for regular elements via `Element::query()->...->electronegativity`
+- ✅ `?float $charge` property on `Substance` (null = neutral/unknown)
+- ✅ Polyatomic ion charge assigned from `polyatomic_ions.charge` DB column in `parsePolyatomicIon()` — electronegativity comparison skipped for these
+- ✅ `Reactant::assignCharges()` method handles all three cases:
+  - Single substance or lone polyatomic ion → skip (neutral, no charge needed)
+  - Regular element + polyatomic ion → regular element gets the inverted sign of the polyatomic's DB charge
+  - Two regular elements → compare `electronegativity` from DB; lower EN → `+1` (cation), higher EN → `-1` (anion)
+- ✅ `assignCharges()` called from `Reactant::__construct()` after `parseReactant()`
 
-**Outstanding:**
-- ❌ `$charge` stores the raw electronegativity float, not the final `+`/`-` polarity. The spec requires comparing both substances' electronegativity values *within the compound* after all substances are parsed, then assigning positive to the lower-EN element (cation) and negative to the higher-EN element (anion)
-- ❌ The post-parse comparison loop in `Reactant::parseReactant()` that performs this within-compound comparison has not been implemented
-- ❌ Type should ultimately be `?int` (e.g. `+1`/`-1`) once the polarity conversion is applied, rather than storing the raw float
-
-**Remaining action:**
-- After the `foreach` loop in `Reactant::parseReactant()`, iterate the parsed non-polyatomic substances, compare their `$charge` (electronegativity) values, then overwrite `$charge` on each: lower EN → positive int (cation), higher EN → negative int (anion)
-
-**Files to touch:** `Reactant.php`, `Substance.php` (type change `?float` → `?int`)
+**Files touched:** `Reactant.php`, `Substance.php`
 
 ---
 
