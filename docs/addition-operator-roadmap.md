@@ -55,16 +55,24 @@ The tokenizer previously split `MgSO4` into `Mg`, `S`, `O4` individually. The sp
 
 ---
 
-## Step 3 — Charge assignment via electronegativity (Rule I)
+## Step 3 — Charge assignment via electronegativity (Rule I) 🔄 In Progress
 
 `Substance` and `AdditionOperator` currently have no concept of cation/anion polarity. The spec requires: within a compound, higher electronegativity → negative (anion), lower → positive (cation).
 
-**Action:**
-1. Add a `?int $charge` property to `Substance` (null = unknown, positive int = cation, negative int = anion)
-2. In `Reactant::parseReactant()`, after parsing all substances, look up each element's `electronegativity` and assign `+` to the lower one, `-` to the higher one
-3. Polyatomic ions already have a known charge from Step 2 — skip electronegativity for those
+**Completed:**
+- ✅ `?float $charge` property added to `Substance` (null = unknown)
+- ✅ Polyatomic ion charge assigned from `polyatomic_ions.charge` DB column — electronegativity skipped for these (correct per spec)
+- ✅ Raw `electronegativity` value stored in `$charge` for regular elements via `Element::query()->...->electronegativity`
 
-**Files to touch:** `Substance.php`, `Reactant.php`
+**Outstanding:**
+- ❌ `$charge` stores the raw electronegativity float, not the final `+`/`-` polarity. The spec requires comparing both substances' electronegativity values *within the compound* after all substances are parsed, then assigning positive to the lower-EN element (cation) and negative to the higher-EN element (anion)
+- ❌ The post-parse comparison loop in `Reactant::parseReactant()` that performs this within-compound comparison has not been implemented
+- ❌ Type should ultimately be `?int` (e.g. `+1`/`-1`) once the polarity conversion is applied, rather than storing the raw float
+
+**Remaining action:**
+- After the `foreach` loop in `Reactant::parseReactant()`, iterate the parsed non-polyatomic substances, compare their `$charge` (electronegativity) values, then overwrite `$charge` on each: lower EN → positive int (cation), higher EN → negative int (anion)
+
+**Files to touch:** `Reactant.php`, `Substance.php` (type change `?float` → `?int`)
 
 ---
 

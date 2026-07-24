@@ -2,6 +2,9 @@
 
 namespace App\ChemicalEvaluator;
 
+use App\Models\Element;
+use App\Models\PolyatomicIon;
+use App\Models\Valency;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
@@ -12,13 +15,20 @@ class Substance
 
     // $atom: The number of atoms of a substance. It is the number following the substance ex: (H2, Na3, Cl7)
     // $element: The name of the substance ex: (H, Na, Cl)
+    // $charge: Indicates whether the substance is positively(cation)/negatively(anion) charged or unknown for null.
     public ?int $atom = null;
     public string $element = '';
+    public ?float $charge = null;
+
+    /** @var Collection<int, Substance>|null  */
     public Collection|null $polyatomicSubstances = null;
+
+    /** @var Collection<int, Valency>|null  */
     public Collection|null $valencies = null;
 
     public function __construct($substance, public bool $isPolyatomic = false)
     {
+        $this->polyatomicSubstances = collect();
         $this->isPolyatomic ? $this->parsePolyatomicIon($substance) : $this->parseSubstance($substance);
     }
 
@@ -35,7 +45,6 @@ class Substance
             $this->atom = (int) $matches[1];
         }
 
-        $this->polyatomicSubstances = collect();
         $this->valencies = $this->valencyLookup($this->element);
     }
 
@@ -54,10 +63,12 @@ class Substance
         }
 
         preg_match_all(self::SUBSTANCE_REGEX, $substance, $matches);
-        $this->polyatomicSubstances = collect();
         collect(...$matches)->each(function ($match) {
             $this->polyatomicSubstances->add(new Substance($match));
         });
+
+        $symbol = preg_replace('/<\/?sub>/', '', $substance);
+        $this->charge = PolyatomicIon::query()->whereSymbol($symbol)->first()->charge ?? null;
     }
 
     public function __toString(): string

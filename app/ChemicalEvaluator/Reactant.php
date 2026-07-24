@@ -3,6 +3,7 @@
 namespace App\ChemicalEvaluator;
 
 use App\ChemicalEvaluator\General\Operand;
+use App\Models\Element;
 use App\Models\PolyatomicIon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -24,6 +25,8 @@ class Reactant extends Operand
         if ($reactant) {
             $this->parseReactant($reactant);
         }
+
+        $this->assignCharges();
     }
 
     public function parseReactant(string $reactant): void
@@ -58,6 +61,35 @@ class Reactant extends Operand
                 }
             }
         }
+    }
+
+    public function assignCharges(): void
+    {
+        $polyatomicIons = $this->substances->where('isPolyatomic', true);
+        $regularElements = $this->substances->where('isPolyatomic', false);
+
+        if ($this->substances->isEmpty() || $this->substances->count() === 1 && $polyatomicIons->count() === 1) {
+            return;
+        }
+
+        if ($polyatomicIons->count() > 0 && $regularElements->count() > 0) {
+            $regularElements->first()->charge = ($polyatomicIons->first()->charge * -1);
+            return;
+        }
+
+        $regularElements->reduce(function (Substance|null $left, Substance $right) {
+            if (is_null($left)) {
+                return $right;
+            }
+
+            [$leftElement, $rightElement] = Element::query()
+                ->whereIn('symbol', [$left->element, $right->element])
+                ->get();
+            $left->charge = $leftElement->electronegativity > $rightElement->electronegativity ? -1 : 1;
+            $right->charge = $left->charge * -1;
+
+            return $right;
+        });
     }
 
     public function __toString(): string
