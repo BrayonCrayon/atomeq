@@ -11,10 +11,18 @@ class Valency extends Model
     use HasFactory;
 
     protected $table = 'element_valencies';
-    protected $fillable = ['element_id','valency'];
+    protected $fillable = [
+        'element_id',
+        'valency',
+        'is_default'
+    ];
 
-   public function element(): BelongsTo
-   {
-       return $this->belongsTo(Element::class);
-   }
+    protected $casts = [
+        'is_default' => 'bool'
+    ];
+
+    public function element(): BelongsTo
+    {
+        return $this->belongsTo(Element::class);
+    }
 }

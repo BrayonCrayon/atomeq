@@ -72,27 +72,23 @@ The tokenizer previously split `MgSO4` into `Mg`, `S`, `O4` individually. The sp
 
 ## Step 4 — Variable valency for transition metals (Rule III)
 
-`AdditionOperator` currently blindly takes `valencies->first()`. The spec requires:
-
-- **Inside a compound** (e.g., `FeCl3`): deduce the metal's charge from the non-metal's known charge × its subscript, then invert. FeCl3 → Cl is always -1, × 3 = -3, so Fe must be +3.
-- **Lone transition metal**: fall back to a `default_oxidation_state` column (e.g., Fe=+2, Cu=+2).
+`AdditionOperator` receives two separate `Reactant`s (e.g., `Fe` and `Cl`) and builds the product — it never reads an existing compound. Charges are already assigned by Step 3's `assignCharges()`. So all that's needed is: when a transition metal has multiple valencies, pick the default one rather than blindly using `->first()`.
 
 **Action:**
-1. Add a `default_oxidation_state` nullable integer column to `elements` table and `Element::$fillable`
-2. Add a `deduceValency(Substance $partner): int` method to `Substance` that performs the Rule III calculation when the element has multiple valencies
-3. Use this in `AdditionOperator` instead of `->first()`
+1. ✅ Add an `is_default` boolean column (default `false`) to `element_valencies` — the creation migration sets `is_default = true` for all single-valency elements migrated from the old `elements.valency` column; the population migration marks the first valency in each array as default (e.g., Fe → +2). `Valency::$fillable` and cast updated accordingly.
+2. ✅ In `AdditionOperator::operate()`, replaced `valencies->first()` with `valencies->where('is_default', true)->first()` for both the left and right substances before passing to `calculateAtom()`.
 
-**Files to touch:** New migration, `Element.php`, `Substance.php`, `AdditionOperator.php`
+> **Note:** Deducing a transition metal's valency *from an existing compound* (e.g., reading `FeCl3` to infer Fe = +3 from Cl × 3) is a **Step 8 concern**, needed when `ReactionOperator` parses a compound reactant in a single-replacement reaction.
 
 ---
 
-## Step 5 — Cation-before-anion ordering in `AdditionOperator` output
+## Step 5 — Cation-before-anion ordering in `AdditionOperator` output ✅ Completed
 
-The spec's Criss-Cross section states the cation (positive) always comes first in the product formula. Currently output order is left-then-right, which may not respect this.
+The spec's Criss-Cross section states the cation (positive) always comes first in the product formula. Previously, output order was left-then-right — tests passed accidentally because the cation was always passed as `$left`.
 
-**Action:** In `AdditionOperator::operate()`, after charges are assigned (Step 3), sort the two substances so the cation is index 0 and anion is index 1 before building the result `Reactant`.
-
-**Files to touch:** `AdditionOperator.php`
+**Completed:**
+- ✅ `AdditionOperator::operate()` now queries both elements' `electronegativity` from DB and swaps the substances if the left has higher EN (i.e., is the anion), ensuring the cation is always index 0 before criss-cross.
+- ✅ Added failing test: `O + Cu` (anion-first input order) → asserts output is `Cu<sub>2</sub>O`.
 
 ---
 

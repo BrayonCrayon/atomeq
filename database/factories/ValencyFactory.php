@@ -15,6 +15,7 @@ class ValencyFactory extends Factory
         return [
             'element_id' => Element::factory(),
             'valency' => $this->faker->numberBetween(1, 15),
+            'is_default' => true
         ];
     }
 }

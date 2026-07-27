@@ -11,6 +11,9 @@
 |
 */
 
+use App\Models\Element;
+use App\Models\Valency;
+
 pest()->extend(Tests\TestCase::class)
  // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
@@ -41,7 +44,78 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function oxygenFactory(): Element
 {
-    // ..
+    return Element::factory()->hasValencies(1, ['valency' => 2])->create([
+        'symbol' => 'O',
+        'electronegativity' => 3.44
+    ]);
+}
+
+function chlorineFactory(): Element
+{
+    return Element::factory()->hasValencies(1, ['valency' => 1])->create([
+        'name' => 'Chlorine',
+        'symbol' => 'Cl',
+        'electronegativity' => 3.16
+    ]);
+}
+
+function sulfurFactory(): Element
+{
+    return Element::factory()->hasValencies(1, ['valency' => 2])->create([
+        'name' => 'Sulfur',
+        'symbol' => 'S',
+        'electronegativity' => 2.58
+    ]);
+}
+
+function hydrogenFactory(): Element
+{
+    return Element::factory()
+        ->hasValencies(1, ['valency' => 1])
+        ->create([
+            'name' => 'Hydrogen',
+            'symbol' => 'H',
+            'electronegativity' => 2.2
+        ]);
+}
+
+function ironFactory(): Element
+{
+    return Element::factory()
+        ->has(
+            Valency::factory()
+                ->sequence(
+                    ['valency' => 2],
+                    ['valency' => 3, 'is_default' => false]
+                )
+        )
+        ->create([
+            'name' => 'Iron',
+            'symbol' => 'Fe',
+            'electronegativity' => 1.83
+        ]);
+}
+
+function magnesiumFactory(): Element
+{
+    return Element::factory()->hasValencies(1, ['valency' => 2])->create([
+        'Magnesium',
+        'symbol' => 'Mg',
+        'electronegativity' => 1.31
+    ]);
+}
+
+function copperFactory(): Element
+{
+    return Element::factory()
+        ->has(
+            Valency::factory()
+                ->sequence(
+                    ['valency' => 1],
+                    ['valency' => 2, 'is_default' => false]
+                )
+        )
+        ->create(['name' => 'Copper', 'symbol' => 'Cu']);
 }

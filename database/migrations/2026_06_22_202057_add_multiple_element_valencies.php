@@ -96,10 +96,13 @@ return new class extends Migration
 
         foreach (self::ELEMENT_VALENCIES as $atomicNumber => $valencies) {
 
-            foreach ($valencies as $valency) {
+            foreach ($valencies as $idx => $valency) {
                 $insertArray[] = [
                     'element_id' => $elementsToInsert[$atomicNumber],
                     'valency' => $valency,
+                    'is_default' => $idx === 0,
+                    'created_at' => now(),
+                    'updated_at' => now()
                 ];
             }
         }

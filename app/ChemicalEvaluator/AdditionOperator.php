@@ -4,6 +4,7 @@ namespace App\ChemicalEvaluator;
 
 use App\ChemicalEvaluator\General\BinaryOperator;
 use App\ChemicalEvaluator\General\Operand;
+use App\Models\Element;
 
 class AdditionOperator extends BinaryOperator
 {
@@ -17,15 +18,25 @@ class AdditionOperator extends BinaryOperator
 
         $result = new Reactant();
 
-        $firstValencyOfLeft = $left->substances[0]->valencies->first()->valency;
-        $firstValencyOfRight = $right->substances[0]->valencies->first()->valency;
+        $leftSubstance = $left->substances[0];
+        $rightSubstance = $right->substances[0];
+
+        $elements = Element::query()
+            ->whereIn('symbol', [$leftSubstance->element, $rightSubstance->element])
+            ->get()
+            ->keyBy('symbol');
+
+        if (($elements[$leftSubstance->element]->electronegativity ?? 0) > ($elements[$rightSubstance->element]->electronegativity ?? 0)) {
+            [$leftSubstance, $rightSubstance] = [$rightSubstance, $leftSubstance];
+        }
+
+        $firstValencyOfLeft = $leftSubstance->valencies->where('is_default', true)->first();
+        $firstValencyOfRight = $rightSubstance->valencies->where('is_default', true)->first();
 
         $substances = [];
-        $atomsOfLeft = $this->calculateAtom($firstValencyOfLeft, $firstValencyOfRight);
-        $atomsOfRight = $this->calculateAtom($firstValencyOfRight, $firstValencyOfLeft);
-        $left->substances[0]->atom = $atomsOfLeft;
-        $right->substances[0]->atom = $atomsOfRight;
-        $result->substances = [$left->substances[0], $right->substances[0]];
+        $leftSubstance->atom = $this->calculateAtom($firstValencyOfLeft->valency, $firstValencyOfRight->valency);
+        $rightSubstance->atom = $this->calculateAtom($firstValencyOfRight->valency, $firstValencyOfLeft->valency);
+        $result->substances = collect([$leftSubstance, $rightSubstance]);
         return $result;
 //        foreach ($left->substances as $substance) {
 //            $element = $substance->element;

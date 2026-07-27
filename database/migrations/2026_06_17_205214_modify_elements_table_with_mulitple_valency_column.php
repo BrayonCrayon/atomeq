@@ -13,6 +13,7 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(Element::class)->index();
             $table->smallInteger('valency');
+            $table->boolean('is_default')->default(false);
             $table->timestamps();
         });
 
@@ -25,6 +26,9 @@ return new class extends Migration
             DB::table('element_valencies')->insert([
                 'element_id' => $row->id,
                 'valency' => $row->valency,
+                'is_default' => true,
+                'created_at' => now(),
+                'updated_at' => now()
             ]);
         });
     }

@@ -1,9 +1,7 @@
 <?php
 
 use App\ChemicalEvaluator\Reactant;
-use App\Models\Element;
 use App\Models\PolyatomicIon;
-use App\Models\Valency;
 
 describe('Reactant', function () {
     test('will create a reactant', function () {
@@ -16,30 +14,20 @@ describe('Reactant', function () {
     });
 
     test('will create a reactant with a coefficient', function () {
-       $substance = '2H';
-       $target = new Reactant($substance);
+        $substance = '2H';
+        $target = new Reactant($substance);
 
-       expect($target->substances)->tohaveCount(1)
+        expect($target->substances)->tohaveCount(1)
             ->and($target->substances[0]->element)->toBe('H')
             ->and($target->substances[0]->atom)->toBe(1)
             ->and($target->coefficient)->toBe(2);
     });
 
     test('will create a reactant with a complex substance', function () {
-        Element::factory()
-            ->hasValencies(1, ['valency' => 2])
-            ->create([
-                'symbol' => 'O',
-                'electronegativity' => 3.44
-            ]);
-        Element::factory()
-            ->hasValencies(1, ['valency' => 1])
-            ->create([
-                'symbol' => 'H',
-                'electronegativity' => 2.2
-            ]);
+        oxygenFactory();
+        hydrogenFactory();
 
-       $substance = '2H<sub>2</sub>O';
+        $substance = '2H<sub>2</sub>O';
 
         $target = new Reactant($substance);
 
@@ -93,10 +81,7 @@ describe('Reactant', function () {
     });
 
     test('will identify a substance with a polyatomic ion', function () {
-        Element::factory()->hasValencies(1, ['valency' => 2])->create([
-            'symbol' => 'Mg',
-            'electronegativity' => 1.31
-        ]);
+        magnesiumFactory();
         $sulfate = PolyatomicIon::whereSymbol('SO4')->first();
 
         $substance = 'MgSO<sub>4</sub>';
@@ -116,25 +101,8 @@ describe('Reactant', function () {
     });
 
     test('will set cation and anion charge correctly for a given reactant', function () {
-        Element::factory()
-            ->has(
-                Valency::factory()
-                    ->sequence(
-                        ['valency' => 2],
-                        ['valency' => 3]
-                    )
-            )
-            ->create([
-                'symbol' => 'Fe',
-                'electronegativity' => 1.83
-            ]);
-        Element::factory()
-            ->hasValencies(1, ['valency' => 2])
-            ->create([
-                'symbol' => 'O',
-                'electronegativity' => 3.44
-            ]);
-
+        ironFactory();
+        oxygenFactory();
         $target = new Reactant('FeO');
 
         expect($target->substances)->toHaveCount(2)
