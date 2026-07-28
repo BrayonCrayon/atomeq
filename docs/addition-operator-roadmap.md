@@ -94,15 +94,20 @@ The spec's Criss-Cross section states the cation (positive) always comes first i
 
 ## Step 6 — Activity series gate in `ReactionOperator` (Rule IV)
 
-`ReactionOperator::operate()` currently just returns `$right` unconditionally. The spec requires: for a single-replacement reaction `A + BC ->`, compare `A.activity_rank` vs `B.activity_rank`. If A is weaker (lower rank) than B, return `"No Reaction"`.
+`ReactionOperator` was incorrectly a `BinaryOperator`, taking both a reactants operand and a products operand. Since the user writes `A + BC ->` with no right-hand side (products are *computed*, not given), `ReactionOperator` must be a `UnaryOperator` — it receives only the reactants and returns the computed products.
+
+The spec requires: for a single-replacement reaction `A + BC ->`, compare `A.activity_rank` vs `B.activity_rank`. If A is weaker (lower rank) than B, return `"No Reaction"`.
 
 **Action:**
-1. Identify which reactant is the lone element (A) and which is the compound (BC)
-2. Look up both elements' `activity_rank`
-3. If `A.activity_rank <= B.activity_rank`, return a `NoReactionOperand` (a simple `Operand` subclass whose `__toString()` returns `"No Reaction"`)
-4. Otherwise, proceed with the displacement
+1. Add `General/UnaryOperator.php` — abstract class with `operate(Operand $operand): Operand`, mirroring the existing `BinaryOperator`.
+2. Update `Evaluator::evaluate()` to handle `UnaryOperator`: pop one operand, call `operate($operand)`, push the result.
+3. Change `ReactionOperator` to extend `UnaryOperator` instead of `BinaryOperator`.
+4. In `ReactionOperator::operate()`, identify which substance is the lone element (A) and which is the compound (BC).
+5. Look up both elements' `activity_rank` from the DB.
+6. If `A.activity_rank <= B.activity_rank`, return a `NoReactionOperand` (a simple `Operand` subclass whose `__toString()` returns `"No Reaction"`).
+7. Otherwise, proceed with the displacement (Step 8).
 
-**Files to touch:** `ReactionOperator.php`, new `NoReactionOperand.php`
+**Files to touch:** `General/UnaryOperator.php` (new), `Evaluator.php`, `ReactionOperator.php`, new `NoReactionOperand.php`
 
 ---
 

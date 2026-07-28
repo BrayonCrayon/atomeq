@@ -16,6 +16,15 @@ class AdditionOperator extends BinaryOperator
             throw new \InvalidArgumentException('Addition operator requires Reactant operands');
         }
 
+        $leftIsCompound = $left->substances->count() > 1;
+        $rightIsCompound = $right->substances->count() > 1;
+
+        if ($leftIsCompound || $rightIsCompound) {
+            $loneElement = $leftIsCompound ? $right : $left;
+            $compound = $leftIsCompound ? $left : $right;
+            return new ReactionMixture($loneElement, $compound);
+        }
+
         $result = new Reactant();
 
         $leftSubstance = $left->substances[0];
@@ -36,7 +45,18 @@ class AdditionOperator extends BinaryOperator
         $substances = [];
         $leftSubstance->atom = $this->calculateAtom($firstValencyOfLeft->valency, $firstValencyOfRight->valency);
         $rightSubstance->atom = $this->calculateAtom($firstValencyOfRight->valency, $firstValencyOfLeft->valency);
+
+        if($leftSubstance->element === $rightSubstance->element){
+            $newSubstance = new Substance($leftSubstance->element);
+            $newSubstance->atom = $leftSubstance->atom + $rightSubstance->atom;
+
+            $result->substances = collect([$newSubstance]);
+            return $result;
+        }
+
+
         $result->substances = collect([$leftSubstance, $rightSubstance]);
+
         return $result;
 //        foreach ($left->substances as $substance) {
 //            $element = $substance->element;

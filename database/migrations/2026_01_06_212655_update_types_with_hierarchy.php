@@ -6,10 +6,6 @@ use Illuminate\Support\Facades\DB;
 return new class () extends Migration {
     public function up(): void
     {
-        if (app()->runningUnitTests()) {
-            return;
-        }
-
         DB::transaction(function () {
             $parentsNames = ['metal', 'nonmetal', 'metalloid'];
             $nonMetalChildrenNames = ['noble-gas', 'halogen'];

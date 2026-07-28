@@ -94,7 +94,8 @@ function ironFactory(): Element
         ->create([
             'name' => 'Iron',
             'symbol' => 'Fe',
-            'electronegativity' => 1.83
+            'electronegativity' => 1.83,
+            'activity_rank' => 20,
         ]);
 }
 
@@ -117,5 +118,10 @@ function copperFactory(): Element
                     ['valency' => 2, 'is_default' => false]
                 )
         )
-        ->create(['name' => 'Copper', 'symbol' => 'Cu']);
+        ->create([
+            'name' => 'Copper',
+            'symbol' => 'Cu',
+            'electronegativity' => 1.90,
+            'activity_rank' => 5,
+        ]);
 }

@@ -26,7 +26,7 @@ class Substance
     /** @var Collection<int, Valency>|null  */
     public Collection|null $valencies = null;
 
-    public function __construct($substance, public bool $isPolyatomic = false)
+    public function __construct(string $substance, public bool $isPolyatomic = false)
     {
         $this->polyatomicSubstances = collect();
         $this->isPolyatomic ? $this->parsePolyatomicIon($substance) : $this->parseSubstance($substance);

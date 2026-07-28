@@ -4,6 +4,7 @@ namespace App\ChemicalEvaluator;
 
 use App\ChemicalEvaluator\General\BinaryOperator;
 use App\ChemicalEvaluator\General\Operand;
+use App\ChemicalEvaluator\General\UnaryOperator;
 use SplStack;
 
 class Evaluator
@@ -26,6 +27,12 @@ class Evaluator
 
             if ($token instanceof Operand) {
                 $evaluationStack->push($token);
+                continue;
+            }
+
+            if ($token instanceof UnaryOperator && $evaluationStack->count() >= 1) {
+                $operand = $evaluationStack->pop();
+                $evaluationStack->push($token->operate($operand));
                 continue;
             }
 
