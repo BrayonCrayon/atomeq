@@ -5,8 +5,7 @@ namespace Tests\Feature\Controllers;
 use App\Models\Element;
 
 test('will hit the endpoint and return a success code', function () {
-    $elements = Element::factory(2)->create();
-    $formattedElements = $elements->map(function ($element) {
+    $formattedElements = Element::get()->map(function ($element) {
         return [
             'id' => $element->id,
             'name' => $element->name,
@@ -45,7 +44,7 @@ test('will hit the endpoint and return a success code', function () {
 });
 
 test('will return relationships for each element', function () {
-    $element = Element::factory()->create();
+    $element = Element::first();
     $relations = ['relations' => ['type', 'state']];
 
     $this->getJson(route('elements.index', $relations))
