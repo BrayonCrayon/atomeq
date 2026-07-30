@@ -20,9 +20,6 @@ describe('ReactionOperator', function () {
 
     test('returns No Reaction when lone element has lower activity rank than compound element', function () {
         Cache::flush();
-        ironFactory();   // Fe, activity_rank=20
-        copperFactory(); // Cu, activity_rank=5, electronegativity=1.90
-        chlorineFactory(); // Cl
 
         // Cu (rank=5) cannot displace Fe (rank=20) from FeCl2
         $loneElement = new Reactant('Cu');
@@ -38,9 +35,6 @@ describe('ReactionOperator', function () {
 
     test('proceeds when lone element has higher activity rank than compound element', function () {
         Cache::flush();
-        ironFactory();   // Fe, activity_rank=20
-        copperFactory(); // Cu, activity_rank=5, electronegativity=1.90
-        chlorineFactory(); // Cl
 
         // Fe (rank=20) can displace Cu (rank=5) from CuCl2
         $loneElement = new Reactant('Fe');
@@ -55,9 +49,6 @@ describe('ReactionOperator', function () {
 
     test('evaluator returns No Reaction for Cu + FeCl2', function () {
         Cache::flush();
-        ironFactory();
-        copperFactory();
-        chlorineFactory();
 
         $tokenizer = new Tokenizer();
         $tokenizer->tokenize('Cu + FeCl<sub>2</sub> ->');
@@ -71,9 +62,6 @@ describe('ReactionOperator', function () {
 
     test('evaluator proceeds for Fe + CuCl2 (returns compound placeholder until Step 8)', function () {
         Cache::flush();
-        ironFactory();
-        copperFactory();
-        chlorineFactory();
 
         $tokenizer = new Tokenizer();
         $tokenizer->tokenize('Fe + CuCl<sub>2</sub> ->');
