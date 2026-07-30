@@ -15,6 +15,9 @@ beforeEach(function () {
     if (Discoverer::count() > 0) {
         ElementDiscovery::query()->delete();
         Discoverer::query()->delete();
+        Element::query()->delete();
+        Type::query()->delete();
+        ElementState::query()->delete();
     }
 
     $csvContent = Storage::disk()->get('Periodic_Table_of_Elements.csv');
