@@ -24,9 +24,6 @@ describe('Reactant', function () {
     });
 
     test('will create a reactant with a complex substance', function () {
-        oxygenFactory();
-        hydrogenFactory();
-
         $substance = '2H<sub>2</sub>O';
 
         $target = new Reactant($substance);
@@ -81,7 +78,6 @@ describe('Reactant', function () {
     });
 
     test('will identify a substance with a polyatomic ion', function () {
-        magnesiumFactory();
         $sulfate = PolyatomicIon::whereSymbol('SO4')->first();
 
         $substance = 'MgSO<sub>4</sub>';
@@ -101,8 +97,6 @@ describe('Reactant', function () {
     });
 
     test('will set cation and anion charge correctly for a given reactant', function () {
-        ironFactory();
-        oxygenFactory();
         $target = new Reactant('FeO');
 
         expect($target->substances)->toHaveCount(2)
