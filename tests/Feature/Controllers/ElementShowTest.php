@@ -11,7 +11,7 @@ test('will reject a request without element id', function () {
 });
 
 test('will hit the endpoint to retrieve a single element based on the id provided in the query params', function () {
-    $element = Element::factory()->create();
+    $element = Element::first();
 
     $this->getJson(route('elements.show', ['element' => $element->name]))
         ->assertOk()
@@ -48,7 +48,7 @@ test('will hit the endpoint to retrieve a single element based on the id provide
 });
 
 test("will return discoverers when retrieving an element data", function () {
-    $element = Element::factory()->hasAttached(Discoverer::factory(), ['year' => 2001])->create();
+    $element = Element::first();
 
     $response = $this->getJson(
         route('elements.show', ['element' => $element->name, 'relations' => ['discoverers']])
