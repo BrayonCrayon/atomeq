@@ -1,12 +1,12 @@
 <?php
 
 use App\ChemicalEvaluator\Substance;
+use App\Models\Element;
 use App\Models\PolyatomicIon;
 
 describe('Substance', function () {
 
     test('will retrieve and set charge for elements', function () {
-        oxygenFactory();
         $substance = new Substance("O<sub>2</sub>");
 
         expect($substance->atom)->toEqual(2)
@@ -18,8 +18,6 @@ describe('Substance', function () {
     });
 
     test('will set charge for a polyatomic ion element', function () {
-        $oxygen = oxygenFactory();
-        $sulfur = sulfurFactory();
         $sulfate = PolyatomicIon::whereSymbol('SO4')->first();
 
         $substance = 'SO<sub>4</sub>';
@@ -32,10 +30,10 @@ describe('Substance', function () {
             ->and($target->polyatomicSubstances)->toHaveCount(2)
             ->and($target->polyatomicSubstances->first()->element)->toEqual('S')
             ->and($target->polyatomicSubstances->first()->atom)->toEqual(1)
-            ->and($target->polyatomicSubstances->first()->charge)->toEqual($sulfur->electronegativity)
+            ->and($target->polyatomicSubstances->first()->charge)->toBeNull()
             ->and($target->polyatomicSubstances->last()->element)->toEqual('O')
             ->and($target->polyatomicSubstances->last()->atom)->toEqual(4)
-            ->and($target->polyatomicSubstances->last()->charge)->toEqual($oxygen->electronegativity);
+            ->and($target->polyatomicSubstances->last()->charge)->toBeNull();
     });
 
 });
