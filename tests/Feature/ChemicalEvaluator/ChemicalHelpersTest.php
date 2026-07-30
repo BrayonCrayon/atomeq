@@ -8,12 +8,11 @@ use App\Models\Valency;
 uses(ChemicalHelpers::class);
 
 describe('valencyLookup', function () {
-    test('can lookup valency of Nitrogen', function () {
-        Element::factory()->hasValencies(['valency' => 3])->create([
-            'name' => 'Nitrogen',
-            'symbol' => 'N',
-        ]);
+    beforeEach(function () {
+        Cache::clear();
+    });
 
+    test('can lookup valency of Nitrogen', function () {
         $result = $this->valencyLookup('N');
 
         expect($result)->toHaveCount(1);
@@ -21,14 +20,11 @@ describe('valencyLookup', function () {
     });
 
     test('can retrieve multiple valencies for an element', function () {
-        $element = Element::factory()->hasValencies(3)->create([
-            'name' => 'Nitrogen',
-            'symbol' => 'N',
-        ]);
+        $element = Element::where('symbol', 'Mn')->first();
 
         $valencies = $element->valencies;
 
-        $result = $this->valencyLookup('N');
+        $result = $this->valencyLookup('Mn');
 
         expect($result)->toHaveCount(3);
         expect($result)->toEqual($valencies);
@@ -36,48 +32,27 @@ describe('valencyLookup', function () {
 });
 
 describe('calculateAtom', function () {
-   test('will calculate Fe valency with O', function () {
-        $iron = Element::factory()->create([
-            'name' => 'Iron',
-            'symbol' => 'Fe',
-            'atomic_number' => 21
-        ]);
-        $ironValency = Valency::factory()->count(2)->for($iron)->sequence(
-            ['valency' => 2],
-            ['valency' => 3]
-        )->create()->first();
+    test('will calculate Fe valency with O', function () {
+        $iron = Element::query()->where('symbol', 'Fe')->first();
+        $ironValency = $iron->valencies->first();
 
-        $oxygen = Element::factory()->hasValencies([ 'valency' => 2 ])->create([
-            'name' => 'Oxygen',
-            'symbol' => 'O',
-            'atomic_number' => 8
-        ]);
+        $oxygen = Element::query()->where('symbol', 'O')->first();
         $oxygenValency = $oxygen->valencies->first();
 
-       $result = $this->calculateAtom($oxygenValency->valency, $ironValency->valency);
+        $result = $this->calculateAtom($oxygenValency->valency, $ironValency->valency);
 
-       expect($result)->toBe(1);
+        expect($result)->toBe(1);
     });
 
-   test('will calculate O valency with Fe', function() {
-       $iron = Element::factory()->create([
-           'name' => 'Iron',
-           'symbol' => 'Fe',
-           'atomic_number' => 21
-       ]);
-       $ironValency = Valency::factory()->count(2)->for($iron)->sequence(
-           ['valency' => 2],
-           ['valency' => 3]
-       )->create()->last();
-       $oxygen = Element::factory()->hasValencies([ 'valency' => 2 ])->create([
-           'name' => 'Oxygen',
-           'symbol' => 'O',
-           'atomic_number' => 8
-       ]);
-       $oxygenValency = $oxygen->valencies->first();
+    test('will calculate O valency with Fe', function () {
+        $iron = Element::query()->where('symbol', 'Fe')->first();
+        $ironValency = $iron->valencies->last();
 
-       $result = $this->calculateAtom($ironValency->valency, $oxygenValency->valency);
+        $oxygen = Element::query()->where('symbol', 'O')->first();
+        $oxygenValency = $oxygen->valencies->first();
 
-       expect($result)->toBe(2);
+        $result = $this->calculateAtom($ironValency->valency, $oxygenValency->valency);
+
+        expect($result)->toBe(2);
     });
 });
