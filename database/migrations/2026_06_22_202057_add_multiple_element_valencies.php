@@ -80,10 +80,6 @@ return new class extends Migration
 
     public function up(): void
     {
-        if (app()->runningUnitTests()) {
-            return;
-        }
-
         $atomNumbers = array_keys(self::ELEMENT_VALENCIES);
 
         $elementsToInsert = DB::table('elements')
