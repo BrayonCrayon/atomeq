@@ -71,7 +71,7 @@ describe('Evaluator', function () {
     });
 
     test('it applies a coefficient to a non-subscripted substance when combining', function () {
-        $equation = "2Na + Cl =";
+        $equation = "2Na + Cl<sub>2</sub> =";
         $tokenizer = new Tokenizer();
         $tokenizer->tokenize($equation);
         $tokenizer->organize();
@@ -84,7 +84,7 @@ describe('Evaluator', function () {
     });
 
     test('it correctly chains four reactants preserving insertion order', function () {
-        $equation = "Na + Cl + H + O =";
+        $equation = "3Na + 3H + 3C + 2O<sub>2</sub> =";
         $tokenizer = new Tokenizer();
         $tokenizer->tokenize($equation);
         $tokenizer->organize();
@@ -93,7 +93,20 @@ describe('Evaluator', function () {
         $result = $evaluator->evaluate();
 
         expect($result)->toBeString()
-            ->and($result)->toBe("NaClHO");
+            ->and($result)->toBe("3NaHCO<sub>3</sub>");
+    });
+
+    test('it correctly adds a compound and a lone element together', function () {
+        $equation = "2CO + O<sub>2</sub> =";
+        $tokenizer = new Tokenizer();
+        $tokenizer->tokenize($equation);
+        $tokenizer->organize();
+
+        $evaluator = new Evaluator($tokenizer);
+        $result = $evaluator->evaluate();
+
+        expect($result)->toBeString()
+            ->and($result)->toBe("2CO<sub>2</sub>");
     });
 
     test('will correctly equate a synthesis equation', function () {

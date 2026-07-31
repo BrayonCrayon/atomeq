@@ -32,6 +32,11 @@ class Substance
         $this->isPolyatomic ? $this->parsePolyatomicIon($substance) : $this->parseSubstance($substance);
     }
 
+    public function getSafeValencies(): Collection
+    {
+        return $this->valencies ?? $this->polyatomicSubstances?->first()?->valencies;
+    }
+
     public function parseSubstance(string $substance): void
     {
         $this->atom = 1;

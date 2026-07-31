@@ -12,18 +12,18 @@ class AdditionOperator extends BinaryOperator
 
     public function operate(Operand $left, Operand $right): Operand
     {
-        if (! $left instanceof Reactant || ! $right instanceof Reactant) {
-            throw new \InvalidArgumentException('Addition operator requires Reactant operands');
-        }
+//        if (! $left instanceof Reactant || ! $right instanceof Reactant || ! $left instanceof ReactionMixture || ! $right instanceof ReactionMixture) {
+//            throw new \InvalidArgumentException('Addition operator requires Reactant operands');
+//        }
 
         $leftIsCompound = $left->substances->count() > 1;
         $rightIsCompound = $right->substances->count() > 1;
 
-        if ($leftIsCompound || $rightIsCompound) {
-            $loneElement = $leftIsCompound ? $right : $left;
-            $compound = $leftIsCompound ? $left : $right;
-            return new ReactionMixture($loneElement, $compound);
-        }
+//        if ($leftIsCompound || $rightIsCompound) {
+//            $loneElement = $leftIsCompound ? $right : $left;
+//            $compound = $leftIsCompound ? $left : $right;
+//            return new ReactionMixture($loneElement, $compound);
+//        }
 
         $result = new Reactant();
 
@@ -39,8 +39,10 @@ class AdditionOperator extends BinaryOperator
             [$leftSubstance, $rightSubstance] = [$rightSubstance, $leftSubstance];
         }
 
-        $firstValencyOfLeft = $leftSubstance->valencies->where('is_default', true)->first();
-        $firstValencyOfRight = $rightSubstance->valencies->where('is_default', true)->first();
+        /** @var Substance $leftSubstance */
+        /** @var Substance $rightSubstance */
+        $firstValencyOfLeft = $leftSubstance->getSafeValencies()->where('is_default', true)->first();
+        $firstValencyOfRight = $rightSubstance->getSafeValencies()->where('is_default', true)->first();
 
         $substances = [];
         $leftSubstance->atom = $this->calculateAtom($firstValencyOfLeft->valency, $firstValencyOfRight->valency);
@@ -56,30 +58,7 @@ class AdditionOperator extends BinaryOperator
 
 
         $result->substances = collect([$leftSubstance, $rightSubstance]);
-
-        return $result;
-//        foreach ($left->substances as $substance) {
-//            $element = $substance->element;
-//            if (!isset($substances[$element])) {
-//                $substances[$element] = clone $substance;
-//                $substances[$element]->atom *= $left->coefficient;
-//            } else {
-//                $substances[$element]->atom += ($substance->atom * $left->coefficient);
-//            }
-//        }
-
-//        foreach ($right->substances as $substance) {
-//            $element = $substance->element;
-//            if (!isset($substances[$element])) {
-//                $substances[$element] = clone $substance;
-//                $substances[$element]->atom *= $right->coefficient;
-//            } else {
-//                $substances[$element]->atom += ($substance->atom * $right->coefficient);
-//            }
-//        }
-
-        $result->substances = array_values($substances);
-        $result->coefficient = 1; // Result of addition is a single combined reactant for now
+        $result->coefficient = $left->coefficient;
 
         return $result;
     }
