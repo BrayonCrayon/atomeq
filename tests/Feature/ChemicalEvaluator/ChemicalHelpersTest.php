@@ -26,7 +26,7 @@ describe('valencyLookup', function () {
 
         $result = $this->valencyLookup('Mn');
 
-        expect($result)->toHaveCount(3);
+        expect($result)->toHaveCount($valencies->count());
         expect($result)->toEqual($valencies);
     });
 });
