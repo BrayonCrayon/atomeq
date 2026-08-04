@@ -19,11 +19,6 @@ class AdditionOperator extends BinaryOperator
         $leftIsCompound = $left->substances->count() > 1;
         $rightIsCompound = $right->substances->count() > 1;
 
-//        if ($leftIsCompound || $rightIsCompound) {
-//            $loneElement = $leftIsCompound ? $right : $left;
-//            $compound = $leftIsCompound ? $left : $right;
-//            return new ReactionMixture($loneElement, $compound);
-//        }
 
         $result = new Reactant();
 
