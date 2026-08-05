@@ -16,8 +16,6 @@ class AdditionOperator extends BinaryOperator
             throw new \InvalidArgumentException('Addition operator requires Reactant operands');
         }
 
-        $result = new Reactant();
-
         $elements = Element::query()
             ->whereIn('symbol', [
                 ...$left->substances->pluck('element'),
@@ -26,8 +24,6 @@ class AdditionOperator extends BinaryOperator
             ->get()
             ->keyBy('symbol');
 
-        // use criss-cross method from document net_charge = Σ (substance.charge × substance.atom) if multiple substances
-        // Find valency/Charge value from left
         $leftIsCompound = $left->substances->count() > 1;
         $leftChargeValency = 0;
         if ($leftIsCompound)
@@ -38,10 +34,11 @@ class AdditionOperator extends BinaryOperator
             }
         }
         else{
-            $leftChargeValency += $left->substances->first()->valencies->first()->valency;
+            $leftChargeValency += $left->substances->first()->isPolyatomic
+                ? $left->substances->first()->charge
+                : $left->substances->first()->valencies->first()->valency;
         }
 
-        // Find valency/charge value from the right
         $rightIsCompound = $right->substances->count() > 1;
         $rightChargeValency = 0;
         if ($rightIsCompound)
@@ -52,26 +49,37 @@ class AdditionOperator extends BinaryOperator
             }
         }
         else{
-            $rightChargeValency += $right->substances->first()->valencies->first()->valency;
+            $rightChargeValency += $right->substances->first()->isPolyatomic
+                ? $right->substances->first()->charge
+                : $right->substances->first()->valencies->first()->valency;
         }
 
         $leftAtomCount = $this->calculateAtom($leftChargeValency, $rightChargeValency);
         $rightAtomCount = $this->calculateAtom($rightChargeValency, $leftChargeValency);
 
-        $left->substances->each(function (Substance $substance) use ($leftAtomCount) {
-           $substance->atom *= $leftAtomCount;
-        });
+        if ($left->substances->count() != 1)
+        {
+            $left->substances->each(function (Substance $substance) use ($leftAtomCount) {
+                $substance->atom *= $leftAtomCount;
+            });
+        } else {
+            $left->substances->first()->atom = $leftAtomCount;
+        }
 
-        $right->substances->each(function (Substance $substance) use ($rightAtomCount) {
-            $substance->atom *= $rightAtomCount;
-        });
+        if ($right->substances->count() != 1)
+        {
+            $right->substances->each(function (Substance $substance) use ($rightAtomCount) {
+                $substance->atom *= $rightAtomCount;
+            });
+        } else {
+            $right->substances->first()->atom = $rightAtomCount;
+        }
 
-        // Merge duplicates
-        $result->substances = $left->substances;
+        $substances = $left->substances;
 
         foreach($right->substances as $sub)
         {
-            $substance = $result->substances->first(function (Substance $substance) use ($sub){
+            $substance = $substances->first(function (Substance $substance) use ($sub){
                 return $substance->element == $sub->element;
             });
 
@@ -81,15 +89,17 @@ class AdditionOperator extends BinaryOperator
                 continue;
             }
 
-            $result->substances[] = $sub;
+            $substances[] = $sub;
         }
 
-        $result->substances = $result->substances->sortBy(function (Substance $sub) use ($elements) {
+        $sortedSubstances = $substances->sortBy(function (Substance $sub) use ($elements) {
             return $elements[$sub->element]->electronegativity ?? 0;
         });
 
+        $stringified = $sortedSubstances->map(fn (Substance $sub) => $sub->__toString())->join('');
+        $result = new Reactant($stringified);
+
         $result->coefficient = $left->coefficient;
-        $result->assignCharges();
 
         return $result;
     }
