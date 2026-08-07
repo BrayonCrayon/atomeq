@@ -48,7 +48,7 @@ class AdditionOperator extends BinaryOperator
                 $rightChargeValency += $sub->charge;
             }
         }
-        else{
+        else {
             $rightChargeValency += $right->substances->first()->isPolyatomic
                 ? $right->substances->first()->charge
                 : $right->substances->first()->valencies->first()->valency;
