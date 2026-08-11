@@ -8,14 +8,18 @@ use App\Models\PolyatomicIon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use App\ChemicalEvaluator\ChemicalHelpers;
 
 class Reactant extends Operand
 {
+    use ChemicalHelpers;
     // $coefficient: The coefficient of a substance. How many molecules it has, and is the number preceding the substance ex: (2H2O, 2Na, 2HCl)
     // $substances: The amount of substance(s) containing their atoms and molecules ex: (H2O, Na, HCl)
     public int $coefficient = 1;
     /** @var Collection<int, Substance> */
     public Collection $substances;
+
+    public int $netCharge = 6;
 
     const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?/';
 
@@ -85,8 +89,13 @@ class Reactant extends Operand
             [$leftElement, $rightElement] = Element::query()
                 ->whereIn('symbol', [$left->element, $right->element])
                 ->get();
-            $left->charge = $leftElement->electronegativity > $rightElement->electronegativity ? -1 : 1;
-            $right->charge = $left->charge * -1;
+            $leftElementValency = $this->valencyLookup($leftElement->symbol);
+            $rightElementValency = $this->valencyLookup($rightElement->symbol);
+            $left->charge = $leftElementValency->first()->valency;
+            $left->charge = $leftElement->electronegativity > $rightElement->electronegativity ? $left->charge * -1 : $left->charge;
+            $right->charge = $rightElementValency->first()->valency;
+            $right->charge = $leftElement->electronegativity < $rightElement->electronegativity ? $right->charge * -1 : $right->charge;
+
 
             return $right;
         });

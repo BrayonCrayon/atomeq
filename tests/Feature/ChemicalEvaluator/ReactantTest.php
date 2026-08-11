@@ -105,4 +105,11 @@ describe('Reactant', function () {
             ->and($target->substances[1]->element)->toEqual('O')
             ->and($target->substances[1]->charge)->toEqual(-1);
     });
+
+    test('assign signed valency magnitudes for NaCl', function () {
+        $target = new Reactant('NaCl');
+
+        expect($target->substances[0]->charge)->toEqual(1)
+            ->and($target->substances[1]->charge)->toEqual(-1);
+    });
 });
