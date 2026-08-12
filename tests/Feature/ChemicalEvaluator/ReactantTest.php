@@ -101,9 +101,9 @@ describe('Reactant', function () {
 
         expect($target->substances)->toHaveCount(2)
             ->and($target->substances[0]->element)->toEqual('Fe')
-            ->and($target->substances[0]->charge)->toEqual(1)
+            ->and($target->substances[0]->charge)->toEqual(2)
             ->and($target->substances[1]->element)->toEqual('O')
-            ->and($target->substances[1]->charge)->toEqual(-1);
+            ->and($target->substances[1]->charge)->toEqual(-2);
     });
 
     test('assign signed valency magnitudes for NaCl', function () {
@@ -111,5 +111,13 @@ describe('Reactant', function () {
 
         expect($target->substances[0]->charge)->toEqual(1)
             ->and($target->substances[1]->charge)->toEqual(-1);
+    });
+
+    test('assign signed valency magnitudes for 3 HCCl3', function () {
+        $target = new Reactant('HCCl<sub>3</sub>');
+
+        expect($target->substances[0]->charge)->toEqual(1)
+        ->and($target->substances[1]->charge)->toEqual(4)
+            ->and($target->substances[2]->charge)->toEqual(-1);
     });
 });

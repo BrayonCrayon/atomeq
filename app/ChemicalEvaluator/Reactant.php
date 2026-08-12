@@ -86,15 +86,15 @@ class Reactant extends Operand
                 return $right;
             }
 
-            [$leftElement, $rightElement] = Element::query()
-                ->whereIn('symbol', [$left->element, $right->element])
-                ->get();
+            $leftElement = Element::query()->where('symbol', $left->element)->first();
+            $rightElement = Element::query()->where('symbol', $right->element)->first();
+
             $leftElementValency = $this->valencyLookup($leftElement->symbol);
             $rightElementValency = $this->valencyLookup($rightElement->symbol);
             $left->charge = $leftElementValency->first()->valency;
             $left->charge = $leftElement->electronegativity > $rightElement->electronegativity ? $left->charge * -1 : $left->charge;
             $right->charge = $rightElementValency->first()->valency;
-            $right->charge = $leftElement->electronegativity < $rightElement->electronegativity ? $right->charge * -1 : $right->charge;
+            $right->charge = $rightElement->electronegativity > $leftElement->electronegativity ? $right->charge * -1 : $right->charge;
 
 
             return $right;
