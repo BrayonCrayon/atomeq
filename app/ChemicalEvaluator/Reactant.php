@@ -19,7 +19,7 @@ class Reactant extends Operand
     /** @var Collection<int, Substance> */
     public Collection $substances;
 
-    public int $netCharge = 6;
+    public int $netCharge = 0;
 
     const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?/';
 

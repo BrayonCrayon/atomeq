@@ -110,7 +110,8 @@ describe('Reactant', function () {
         $target = new Reactant('NaCl');
 
         expect($target->substances[0]->charge)->toEqual(1)
-            ->and($target->substances[1]->charge)->toEqual(-1);
+            ->and($target->substances[1]->charge)->toEqual(-1)
+            ->and($target->netCharge)->toEqual(0);
     });
 
     test('assign signed valency magnitudes for 3 HCCl3', function () {
