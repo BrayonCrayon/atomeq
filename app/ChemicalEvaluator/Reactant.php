@@ -81,23 +81,32 @@ class Reactant extends Operand
             return;
         }
 
-        $regularElements->reduce(function (Substance|null $left, Substance $right) {
-            if (is_null($left)) {
-                return $right;
-            }
+        $regularElements->each(function (Substance $left, int $idx) use ($regularElements) {
+
+            $next = $regularElements[$idx + 1] ?? null;
 
             $leftElement = Element::query()->where('symbol', $left->element)->first();
-            $rightElement = Element::query()->where('symbol', $right->element)->first();
-
             $leftElementValency = $this->valencyLookup($leftElement->symbol);
+
+            if (!$left->charge)
+            {
+                $left->charge = $leftElementValency->first()->valency;
+            }
+
+
+            if (!$next) {
+                $this->netCharge += $left->charge * $left->atom;
+                return;
+            }
+
+            $rightElement = Element::query()->where('symbol', $next->element)->first();
             $rightElementValency = $this->valencyLookup($rightElement->symbol);
-            $left->charge = $leftElementValency->first()->valency;
+
             $left->charge = $leftElement->electronegativity > $rightElement->electronegativity ? $left->charge * -1 : $left->charge;
-            $right->charge = $rightElementValency->first()->valency;
-            $right->charge = $rightElement->electronegativity > $leftElement->electronegativity ? $right->charge * -1 : $right->charge;
+            $this->netCharge += $left->charge * $left->atom;
 
-
-            return $right;
+            $next->charge = $rightElementValency->first()->valency;
+            $next->charge = $rightElement->electronegativity > $leftElement->electronegativity ? $next->charge * -1 : $next->charge;
         });
     }
 

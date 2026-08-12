@@ -114,11 +114,20 @@ describe('Reactant', function () {
             ->and($target->netCharge)->toEqual(0);
     });
 
+    // Failing because it's a special case that has no non-metals. Need to account for those bad flowtly boys
     test('assign signed valency magnitudes for 3 HCCl3', function () {
         $target = new Reactant('HCCl<sub>3</sub>');
 
         expect($target->substances[0]->charge)->toEqual(1)
-        ->and($target->substances[1]->charge)->toEqual(4)
-            ->and($target->substances[2]->charge)->toEqual(-1);
+            ->and($target->substances[1]->charge)->toEqual(-4)
+            ->and($target->substances[2]->charge)->toEqual(-1)
+            ->and($target->netCharge)->toEqual(0);
+    });
+
+    test('assign signed valency magnitudes for single atom', function () {
+        $target = new Reactant('Na');
+
+        expect($target->substances[0]->charge)->toEqual(1)
+            ->and($target->netCharge)->toEqual(1);
     });
 });
