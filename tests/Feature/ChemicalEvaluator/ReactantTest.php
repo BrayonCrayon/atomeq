@@ -119,7 +119,7 @@ describe('Reactant', function () {
         $target = new Reactant('HCCl<sub>3</sub>');
 
         expect($target->substances[0]->charge)->toEqual(1)
-            ->and($target->substances[1]->charge)->toEqual(-4)
+            ->and($target->substances[1]->charge)->toEqual(2)
             ->and($target->substances[2]->charge)->toEqual(-1)
             ->and($target->netCharge)->toEqual(0);
     });

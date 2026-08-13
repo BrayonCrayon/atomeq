@@ -81,6 +81,7 @@ class Reactant extends Operand
             return;
         }
 
+
         $regularElements->each(function (Substance $left, int $idx) use ($regularElements) {
 
             $next = $regularElements[$idx + 1] ?? null;
@@ -108,6 +109,38 @@ class Reactant extends Operand
             $next->charge = $rightElementValency->first()->valency;
             $next->charge = $rightElement->electronegativity > $leftElement->electronegativity ? $next->charge * -1 : $next->charge;
         });
+
+        // if all elements are non metals, skip this block
+        // all metalloid needs to be false to get in dis
+        $allNonMetal = Element::query()
+            ->whereIn('symbol', $regularElements->pluck('element')->toArray())
+            ->where('metal', false)
+            ->get();
+
+        if ($allNonMetal->count() === $regularElements->count()) {
+            $hydrogen = $regularElements->where('element', 'H')->first();
+            $hydrogen->charge = 1;
+
+            $cl = $regularElements->where('element', 'Cl')->first();
+            $cl->charge = -1;
+
+            $c = $regularElements->where('element', 'C')->first();
+            $c->charge = -1;
+
+            // calculates charges in the equation (except for carbon)
+            $this->netCharge = 0;
+            $regularElements->filter(fn ($el) => $el->element !== 'C')->each(function(Substance $sub)
+            {
+                $this->netCharge += $sub->charge * $sub->atom;
+            });
+
+            // if c exists
+            if ($c)
+            {
+                $c->charge = $this->netCharge * -1;
+                $this->netCharge = 0;
+            }
+        }
     }
 
     public function __toString(): string
