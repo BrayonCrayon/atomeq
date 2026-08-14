@@ -121,23 +121,28 @@ class Reactant extends Operand
             $hydrogen = $regularElements->where('element', 'H')->first();
             $hydrogen->charge = 1;
 
-            $cl = $regularElements->where('element', 'Cl')->first();
-            $cl->charge = -1;
+            $chlorine = $regularElements->where('element', 'Cl')->first();
+            if ($chlorine)
+            {
+                $chlorine->charge = -1;
+            }
 
-            $c = $regularElements->where('element', 'C')->first();
-            $c->charge = -1;
+            $florine = $regularElements->where('element', 'F')->first();
+            if($florine) {
+                $florine->charge = -1;
+            }
 
-            // calculates charges in the equation (except for carbon)
+            $carbon = $regularElements->where('element', 'C')->first();
+
             $this->netCharge = 0;
-            $regularElements->filter(fn ($el) => $el->element !== 'C')->each(function(Substance $sub)
-            {
-                $this->netCharge += $sub->charge * $sub->atom;
-            });
+            $regularElements->filter(fn ($el) => $el->element !== 'C')
+                ->each(function(Substance $sub) {
+                    $this->netCharge += $sub->charge * $sub->atom;
+                });
 
-            // if c exists
-            if ($c)
+            if ($carbon)
             {
-                $c->charge = $this->netCharge * -1;
+                $carbon->charge = $this->netCharge * -1;
                 $this->netCharge = 0;
             }
         }
