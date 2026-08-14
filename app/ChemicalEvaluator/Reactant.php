@@ -132,6 +132,11 @@ class Reactant extends Operand
                 $florine->charge = -1;
             }
 
+            $oxygen = $regularElements->where('element', 'O')->first();
+            if($oxygen) {
+                $oxygen->charge = -2;
+            }
+
             $carbon = $regularElements->where('element', 'C')->first();
 
             $this->netCharge = 0;

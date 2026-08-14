@@ -142,4 +142,17 @@ describe('Reactant', function () {
         'HBr' => ["HBr", 1, -1, 0],
         'HI' => ["HI", 1, -1, 0],
     ]);
+
+    it("assigning proper charges for 3 compound non-metals: ", function ($compound, $firstCharge, $secondCharge, $thirdCharge, $netCharge) {
+       $target = new Reactant($compound);
+
+       expect($target->substances->first()->charge)->toEqual($firstCharge)
+           ->and($target->substances->get(1)->charge)->toEqual($secondCharge)
+           ->and($target->substances->get(2)->charge)->toEqual($thirdCharge)
+           ->and($target->netCharge)->toEqual($netCharge);
+    })->with([
+        'CHBr3' => ["CHBr<sub>3</sub>", 2, 1, -1, 0],
+        'CH2Br2' => ["CH<sub>2</sub>Br<sub>2</sub>", 0, 1, -1, 0]
+        //'HClO' => ["HClO", 1, 1, -2, 0],
+    ]);
 });
