@@ -119,7 +119,9 @@ class Reactant extends Operand
 
         if ($allNonMetal->count() === $regularElements->count()) {
             $hydrogen = $regularElements->where('element', 'H')->first();
-            $hydrogen->charge = 1;
+            if ($hydrogen) {
+                $hydrogen->charge = 1;
+            }
 
             $chlorine = $regularElements->where('element', 'Cl')->first();
             if ($chlorine)
@@ -150,6 +152,7 @@ class Reactant extends Operand
                 $carbon->charge = $this->netCharge * -1;
                 $this->netCharge = 0;
             }
+            // if P PBr₃S then it's C :)
         }
     }
 
