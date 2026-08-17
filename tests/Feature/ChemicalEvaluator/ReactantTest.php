@@ -151,9 +151,9 @@ describe('Reactant', function () {
            ->and($target->substances->get(2)->charge)->toEqual($thirdCharge)
            ->and($target->netCharge)->toEqual($netCharge);
     })->with([
-//        'CHBr3' => ["CHBr<sub>3</sub>", 2, 1, -1, 0],
-//        'CH2Br2' => ["CH<sub>2</sub>Br<sub>2</sub>", 0, 1, -1, 0],
-//        'NF2Cl' => ["NF<sub>2</sub>Cl", 3, -1, -1, 0],
+        'CHBr3' => ["CHBr<sub>3</sub>", 2, 1, -1, 0],
+        'CH2Br2' => ["CH<sub>2</sub>Br<sub>2</sub>", 0, 1, -1, 0],
+        'NF2Cl' => ["NF<sub>2</sub>Cl", 3, -1, -1, 0],
         'PBr₃S' => ["PBr<sub>3</sub>S", 5, -1, -2, 0],
     ]);
 });
