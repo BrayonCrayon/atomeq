@@ -953,17 +953,32 @@ FUNCTION buildLewisStructure(formula):
         Generate alternative valid structures if necessary.
 
         Necessary when:
-            - Multiple atoms could plausibly be central
+            - Two non-H atoms share the same electronegativity
+              (same element, e.g. N₂O has two N atoms — both
+              orderings N-N-O and N-O-N must be tried)
+            - The chosen central atom produces formal charges
+              that cannot be minimized even after exhausting
+              all lone-pair moves (backtrack and retry with a
+              different central atom)
+            - The formula admits genuinely different skeletons
+              (structural isomers), e.g. HCNO can be
+              H-N=C=O or H-C≡N-O
             - Two different placements of a double bond give
               equally valid formal charges (resonance)
             - Period 3+ atoms (P, S, Cl) could use an
               expanded octet that produces better charges
 
-        This is essentially tree-search recursion:
-        branch at Step 4 (try a different central atom) or
-        at Step 11 (place the double bond on a different
-        neighbor), run Steps 5–12 for each branch, then
-        compare results.
+        The primary path through Steps 4–12 uses the
+        lowest-electronegativity rule to pick the central
+        atom. Step 13 is a fallback: branch at Step 4 (try
+        a different central atom) or at Step 11 (place the
+        double bond on a different neighbor), run Steps 5–12
+        for each branch, then compare results via Step 14.
+
+        Note: H is never central regardless of
+        electronegativity. Some elements (C, N) also have
+        connectivity conventions that can override the
+        electronegativity heuristic.
 
     STEP 14:
         Rank valid structures by this priority:
