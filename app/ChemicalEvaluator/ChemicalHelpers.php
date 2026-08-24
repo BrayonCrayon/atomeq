@@ -29,4 +29,18 @@ trait ChemicalHelpers {
 
         return $elements[$element]->valencies;
     }
+
+    function electronegativeLookup(string $element): float
+    {
+        $elements = Cache::remember('electronegative-lookup', 3600, function () {
+            return Element::get()
+                ->keyBy('symbol');
+        });
+
+        if (!isset($elements[$element])) {
+            return 0;
+        }
+
+        return $elements[$element]->electronegativity;
+    }
 }

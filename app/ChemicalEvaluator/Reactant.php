@@ -43,11 +43,12 @@ class Reactant extends Operand
     public Collection $substances;
 
     public int $netCharge = 0;
-
-    const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?/';
+    public LewisService $lewis;
+    const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?(?:<sup>[0-9]*[+\-]<\/sup>)?/';
 
     public function __construct(string $reactant = null)
     {
+        $this->lewis = new LewisService();
         $this->substances = collect();
         if ($reactant) {
             $this->parseReactant($reactant);
@@ -233,6 +234,18 @@ class Reactant extends Operand
 
     public function lewisStructure(): array
     {
+        // Step 2
+        // Step 3
+        $this->lewis->calculateTotalValenceElectrons($this->substances);
+
+        // step 4
+        $this->lewis->assignCentralAtom($this->substances);
+
+        // Step 5 & 6
+        $this->lewis->assignDefaultBonds($this->substances);
+
+        // Step 7
+        $this->lewis->assignOutsideBondsLonePairs();
 
         return ['test'];
     }

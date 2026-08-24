@@ -6,6 +6,7 @@ use App\Models\Element;
 use App\Models\PolyatomicIon;
 use App\Models\Valency;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class Substance
@@ -19,6 +20,7 @@ class Substance
     public ?int $atom = null;
     public string $element = '';
     public ?float $charge = null;
+    public int $ionCharge = 0;
 
     /** @var Collection<int, Substance>|null  */
     public Collection|null $polyatomicSubstances = null;
@@ -48,6 +50,12 @@ class Substance
 
         if (preg_match('/<sub>(\d+)<\/sub>/', $substance, $matches)) {
             $this->atom = (int) $matches[1];
+        }
+
+        if(preg_match('/<sup>(\d*[+\-])<\/sup>/', $substance, $matches)) {
+            $ionValue = Str::length($matches[1]) > 1 ? Str::numbers($matches[1]) : 1;
+            $sign = Str::endsWith($matches[1], '-')? '-': '+';
+            $this->ionCharge = (int) ($sign . $ionValue);
         }
 
         $this->valencies = $this->valencyLookup($this->element);
