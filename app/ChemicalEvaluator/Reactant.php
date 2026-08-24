@@ -230,4 +230,10 @@ class Reactant extends Operand
         }
         return $string;
     }
+
+    public function lewisStructure(): array
+    {
+
+        return ['test'];
+    }
 }
