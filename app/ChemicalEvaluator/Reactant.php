@@ -13,7 +13,7 @@ class Reactant extends Operand
 {
     use ChemicalHelpers;
 
-    const oxidationStates = [
+    public const oxidationStates = [
         'H' => [-1, 1],
         'C' => [-4, -3, -2, -1, 0, 1, 2, 3, 4],
         'N' => [-3, -2, -1, 0, 1, 2, 3, 4, 5],
@@ -45,7 +45,9 @@ class Reactant extends Operand
 
     public int $netCharge = 0;
     public LewisService $lewis;
-    const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?(?:<sup>[0-9]*[+\-]<\/sup>)?/';
+    public const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?(?:<sup>[0-9]*[+\-]<\/sup>)?/';
+
+    public const NET_NEUTRAL_CHARGE = ['C', 'P'];
 
     public function __construct(?string $reactant = null)
     {
@@ -65,7 +67,7 @@ class Reactant extends Operand
         }
 
         $substancesStr = Str::after($reactant, $this->coefficient);
-        if (! $substancesStr) {
+        if (!$substancesStr) {
             throw new InvalidArgumentException('Reactant must contain at least one substance');
         }
 
@@ -107,38 +109,40 @@ class Reactant extends Operand
             return;
         }
 
-        $hasMetal = Element::query()
+        $elements = Element::query()
             ->with('type')
             ->whereIn('symbol', $regularElements->pluck('element')->toArray())
-            ->where('metal', true)
-            ->count();
+            ->get();
 
-        if ($hasMetal > 0) {
-            $regularElements->each(function (Substance $left, int $idx) use ($regularElements) {
+        $hasMetal = $elements->filter(fn ($el) => $el->metal);
+
+        if ($hasMetal->count() > 0) {
+            $regularElements->each(function (Substance $current, int $idx) use ($regularElements, $elements) {
 
                 $next = $regularElements[$idx + 1] ?? null;
 
-                $leftElement = Element::query()->where('symbol', $left->element)->first();
-                $leftElementValency = $this->valencyLookup($leftElement->symbol);
+                $currentElement = $elements->first(fn ($el) => $el->symbol === $current->element);
+                $currentElementValency = $this->valencyLookup($currentElement->symbol);
 
-                if (! $left->charge) {
-                    $left->charge = $leftElementValency->first()->valency;
+                if (!$current->charge) {
+                    $current->charge = $currentElementValency->first()->valency;
                 }
 
-                if (! $next) {
-                    $this->netCharge += $left->charge * $left->atom;
+                if (!$next) {
+                    $this->netCharge += $current->charge * $current->atom;
 
                     return;
                 }
 
-                $rightElement = Element::query()->where('symbol', $next->element)->first();
-                $rightElementValency = $this->valencyLookup($rightElement->symbol);
+                $nextElement = $elements->first(fn ($el) => $el->symbol === $next->element);
 
-                $left->charge = $leftElement->electronegativity > $rightElement->electronegativity ? $left->charge * -1 : $left->charge;
-                $this->netCharge += $left->charge * $left->atom;
+                $nextElementValency = $this->valencyLookup($nextElement->symbol);
 
-                $next->charge = $rightElementValency->first()->valency;
-                $next->charge = $rightElement->electronegativity > $leftElement->electronegativity ? $next->charge * -1 : $next->charge;
+                $current->charge = $currentElement->electronegativity > $nextElement->electronegativity ? $current->charge * -1 : $current->charge;
+                $this->netCharge += $current->charge * $current->atom;
+
+                $next->charge = $nextElementValency->first()->valency;
+                $next->charge = $nextElement->electronegativity > $currentElement->electronegativity ? $next->charge * -1 : $next->charge;
             });
         }
 
@@ -181,9 +185,7 @@ class Reactant extends Operand
                 $leftElementOxidationState = self::oxidationStates[$leftElement->symbol][0];
                 $left->charge = $leftElementOxidationState;
 
-                if (! $next) {
-                    $this->netCharge += $left->charge * $left->atom;
-
+                if (!$next) {
                     return;
                 }
 
@@ -191,35 +193,21 @@ class Reactant extends Operand
                 $rightElementOxidationState = self::oxidationStates[$rightElement->symbol][0];
 
                 $left->charge = $leftElement->electronegativity > $rightElement->electronegativity ? $left->charge * -1 : $left->charge;
-                $this->netCharge += $left->charge * $left->atom;
 
                 $next->charge = $rightElementOxidationState;
                 $next->charge = $rightElement->electronegativity > $leftElement->electronegativity ? $next->charge * -1 : $next->charge;
             });
 
-            $carbon = $regularElements->where('element', 'C')->first();
+            $specialCases = $regularElements->whereIn('element', self::NET_NEUTRAL_CHARGE)->first();
 
             $this->netCharge = 0;
-            $regularElements->filter(fn ($el) => $el->element !== 'C')
+            $regularElements->filter(fn ($el) => !in_array($el->element, self::NET_NEUTRAL_CHARGE))
                 ->each(function (Substance $sub) {
                     $this->netCharge += $sub->charge * $sub->atom;
                 });
 
-            if ($carbon) {
-                $carbon->charge = $this->netCharge * -1;
-                $this->netCharge = 0;
-            }
-
-            $this->netCharge = 0;
-            $phosphorous = $regularElements->where('element', 'P')->first();
-
-            $regularElements->filter(fn ($el) => $el->element !== 'P')
-                ->each(function (Substance $sub) {
-                    $this->netCharge += $sub->charge * $sub->atom;
-                });
-
-            if ($phosphorous) {
-                $phosphorous->charge = $this->netCharge * -1;
+            if ($specialCases) {
+                $specialCases->charge = $this->netCharge * -1;
                 $this->netCharge = 0;
             }
         }
