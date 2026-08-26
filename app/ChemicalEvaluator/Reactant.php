@@ -8,24 +8,23 @@ use App\Models\PolyatomicIon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use App\ChemicalEvaluator\ChemicalHelpers;
 
 class Reactant extends Operand
 {
     use ChemicalHelpers;
 
     const oxidationStates = [
-        'H'  => [-1, 1],
-        'C'  => [-4, -3, -2, -1, 0, 1, 2, 3, 4],
-        'N'  => [-3, -2, -1, 0, 1, 2, 3, 4, 5],
-        'O'  => [-2, -1, 0, 1, 2],
-        'F'  => [-1, 0],
-        'P'  => [-3, -2, -1, 0, 1, 3, 5],
-        'S'  => [-2, -1, 0, 1, 2, 3, 4, 5, 6],
+        'H' => [-1, 1],
+        'C' => [-4, -3, -2, -1, 0, 1, 2, 3, 4],
+        'N' => [-3, -2, -1, 0, 1, 2, 3, 4, 5],
+        'O' => [-2, -1, 0, 1, 2],
+        'F' => [-1, 0],
+        'P' => [-3, -2, -1, 0, 1, 3, 5],
+        'S' => [-2, -1, 0, 1, 2, 3, 4, 5, 6],
         'Cl' => [-1, 0, 1, 3, 5, 7],
         'Se' => [-2, 0, 2, 4, 6],
         'Br' => [-1, 0, 1, 3, 5, 7],
-        'I'  => [-1, 0, 1, 3, 5, 7],
+        'I' => [-1, 0, 1, 3, 5, 7],
         'At' => [-1, 0, 1, 3, 5, 7],
 
         // Noble gases
@@ -36,9 +35,11 @@ class Reactant extends Operand
         'Xe' => [0, 2, 4, 6, 8],
         'Rn' => [0, 2],
     ];
+
     // $coefficient: The coefficient of a substance. How many molecules it has, and is the number preceding the substance ex: (2H2O, 2Na, 2HCl)
     // $substances: The amount of substance(s) containing their atoms and molecules ex: (H2O, Na, HCl)
     public int $coefficient = 1;
+
     /** @var Collection<int, Substance> */
     public Collection $substances;
 
@@ -46,7 +47,7 @@ class Reactant extends Operand
     public LewisService $lewis;
     const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?(?:<sup>[0-9]*[+\-]<\/sup>)?/';
 
-    public function __construct(string $reactant = null)
+    public function __construct(?string $reactant = null)
     {
         $this->lewis = new LewisService();
         $this->substances = collect();
@@ -74,7 +75,7 @@ class Reactant extends Operand
         }
 
         $polyatomicPattern = PolyatomicIon::query()->get()
-            ->map(fn(PolyatomicIon $ion) => Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', $ion->symbol))
+            ->map(fn (PolyatomicIon $ion) => Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', $ion->symbol))
             ->join('|');
 
         $substanceParts = preg_split("/($polyatomicPattern)/", $substancesStr, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
@@ -102,6 +103,7 @@ class Reactant extends Operand
 
         if ($polyatomicIons->count() > 0 && $regularElements->count() > 0) {
             $regularElements->first()->charge = ($polyatomicIons->first()->charge * -1);
+
             return;
         }
 
@@ -119,13 +121,13 @@ class Reactant extends Operand
                 $leftElement = Element::query()->where('symbol', $left->element)->first();
                 $leftElementValency = $this->valencyLookup($leftElement->symbol);
 
-                if (!$left->charge) {
+                if (! $left->charge) {
                     $left->charge = $leftElementValency->first()->valency;
                 }
 
-
-                if (!$next) {
+                if (! $next) {
                     $this->netCharge += $left->charge * $left->atom;
+
                     return;
                 }
 
@@ -158,14 +160,14 @@ class Reactant extends Operand
             }
 
             $oxygen = $regularElements->where('element', 'O')->first();
-            if($oxygen) {
+            if ($oxygen) {
                 $oxygen->charge = -2;
             }
 
             $halogens = $allNonMetal->where('type.name', 'halogen');
             $regularElements
-                ->filter(fn(Substance $substance) => $halogens->some('symbol', $substance->element))
-                ->each(function(Substance $halogenSubstance) {
+                ->filter(fn (Substance $substance) => $halogens->some('symbol', $substance->element))
+                ->each(function (Substance $halogenSubstance) {
                     $halogenSubstance->charge = -1;
                 });
 
@@ -179,8 +181,9 @@ class Reactant extends Operand
                 $leftElementOxidationState = self::oxidationStates[$leftElement->symbol][0];
                 $left->charge = $leftElementOxidationState;
 
-                if (!$next) {
+                if (! $next) {
                     $this->netCharge += $left->charge * $left->atom;
+
                     return;
                 }
 
@@ -198,12 +201,11 @@ class Reactant extends Operand
 
             $this->netCharge = 0;
             $regularElements->filter(fn ($el) => $el->element !== 'C')
-                ->each(function(Substance $sub) {
+                ->each(function (Substance $sub) {
                     $this->netCharge += $sub->charge * $sub->atom;
                 });
 
-            if ($carbon)
-            {
+            if ($carbon) {
                 $carbon->charge = $this->netCharge * -1;
                 $this->netCharge = 0;
             }
@@ -211,8 +213,8 @@ class Reactant extends Operand
             $this->netCharge = 0;
             $phosphorous = $regularElements->where('element', 'P')->first();
 
-            $regularElements->filter(fn($el) => $el->element !== 'P')
-                ->each(function(Substance $sub) {
+            $regularElements->filter(fn ($el) => $el->element !== 'P')
+                ->each(function (Substance $sub) {
                     $this->netCharge += $sub->charge * $sub->atom;
                 });
 
@@ -229,7 +231,33 @@ class Reactant extends Operand
         foreach ($this->substances as $substance) {
             $string .= $substance;
         }
+
         return $string;
+    }
+
+    public function getChargeValency(): int
+    {
+        if ($this->substances->count() > 1) {
+
+            return $this->substances->first()->isPolyatomic
+                ? $this->substances->first()->charge
+                : $this->substances->first()->valencies->first()->valency;
+        }
+
+        return $this->substances->first()->charge ?? 0;
+    }
+
+    public function setAtomCount(int $atomCount): void
+    {
+        if ($this->substances->count() == 1) {
+            $this->substances->first()->atom = $atomCount;
+
+            return;
+        }
+
+        $this->substances->each(function (Substance $substance) use ($atomCount) {
+            $substance->atom *= $atomCount;
+        });
     }
 
     public function lewisStructure(): array
