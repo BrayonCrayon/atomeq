@@ -17,30 +17,18 @@ class AdditionOperator extends BinaryOperator
             throw new \InvalidArgumentException('Addition operator requires Reactant operands');
         }
 
-        $elements = Element::query()
-            ->whereIn('symbol', [
-                ...$left->substances->pluck('element'),
-                ...$right->substances->pluck('element'),
-            ])
-            ->get()
-            ->keyBy('symbol');
-
-        $leftChargeValency = $this->getChargeValency($left);
-        $rightChargeValency = $this->getChargeValency($right);
+        $leftChargeValency = $left->getChargeValency();
+        $rightChargeValency = $right->getChargeValency();
 
         $leftAtomCount = $this->calculateAtom($leftChargeValency, $rightChargeValency);
         $rightAtomCount = $this->calculateAtom($rightChargeValency, $leftChargeValency);
 
-        $this->setAtomCount($left, $leftAtomCount);
-        $this->setAtomCount($right, $rightAtomCount);
+        $left->setAtomCount($leftAtomCount);
+        $right->setAtomCount($rightAtomCount);
 
         $substances = $this->consolidateSubstances($left, $right);
 
-        $sortedSubstances = $substances->sortBy(function (Substance $sub) use ($elements) {
-            return $elements[$sub->element]->electronegativity ?? 0;
-        });
-
-        $stringified = $sortedSubstances->map(fn (Substance $sub) => $sub->__toString())->join('');
+        $stringified = $substances->map(fn (Substance $sub) => $sub->__toString())->join('');
         $result = new Reactant($stringified);
 
         $result->coefficient = $left->coefficient;
@@ -48,49 +36,25 @@ class AdditionOperator extends BinaryOperator
         return $result;
     }
 
-    public function getChargeValency(Reactant $reactant): int
-    {
-        $isCompound = $reactant->substances->count() > 1;
-        if (! $isCompound) {
-            return $reactant->substances->first()->isPolyatomic
-                ? $reactant->substances->first()->charge
-                : $reactant->substances->first()->valencies->first()->valency;
-        }
-
-        return $reactant->substances->reduce(fn ($sub) => $sub?->charge ?? 0);
-    }
-
-    public function setAtomCount(Reactant $reactant, int $atomCount): void
-    {
-        if ($reactant->substances->count() == 1) {
-            $reactant->substances->first()->atom = $atomCount;
-
-            return;
-        }
-
-        $reactant->substances->each(function (Substance $substance) use ($atomCount) {
-            $substance->atom *= $atomCount;
-        });
-    }
-
     public function consolidateSubstances(Reactant $left, Reactant $right): Collection
     {
-        $substances = $left->substances;
 
-        $right->substances->each(function (Substance $sub) use ($substances) {
-            $substance = $substances->first(function (Substance $substance) use ($sub) {
-                return $substance->element == $sub->element;
-            });
+        $substances = $left->substances->concat($right->substances);
 
-            if ($substance) {
-                $substance->atom += $sub->atom;
+        $elements = Element::query()
+            ->whereIn('symbol', $substances->pluck('element')->unique())
+            ->orderBy('electronegativity')
+            ->pluck('symbol');
 
-                return;
-            }
+        return $substances
+            ->groupBy('element')
+            ->sortBy(fn ($group, $element) => $elements->search($element))
+            ->map(function ($group) {
+                $substance = $group->first();
+                $substance->atom = $group->sum('atom');
 
-            $substances[] = $sub;
-        });
-
-        return $substances;
+                return $substance;
+            })
+            ->values();
     }
 }

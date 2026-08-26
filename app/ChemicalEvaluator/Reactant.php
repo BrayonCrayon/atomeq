@@ -239,12 +239,12 @@ class Reactant extends Operand
     {
         if ($this->substances->count() > 1) {
 
-            return $this->substances->first()->isPolyatomic
-                ? $this->substances->first()->charge
-                : $this->substances->first()->valencies->first()->valency;
+            return $this->substances->reduce(fn ($sub) => $sub?->charge ?? 0);
         }
 
-        return $this->substances->first()->charge ?? 0;
+        return $this->substances->first()->isPolyatomic
+            ? $this->substances->first()->charge
+            : $this->substances->first()->valencies->first()->valency;
     }
 
     public function setAtomCount(int $atomCount): void
