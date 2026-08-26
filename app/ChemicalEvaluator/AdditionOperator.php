@@ -39,7 +39,7 @@ class AdditionOperator extends BinaryOperator
     public function consolidateSubstances(Reactant $left, Reactant $right): Collection
     {
 
-        $substances = $left->substances->concat($right->substances);
+        $substances = $left->substances->merge($right->substances);
 
         $elements = Element::query()
             ->whereIn('symbol', $substances->pluck('element')->unique())
