@@ -249,15 +249,17 @@ class Reactant extends Operand
 
     public function setAtomCount(int $atomCount): void
     {
-        if ($this->substances->count() == 1) {
-            $this->substances->first()->atom = $atomCount;
+        if ($this->substances->count() > 1) {
+
+            $this->substances->each(function (Substance $substance) use ($atomCount) {
+                $substance->atom *= $atomCount;
+            });
 
             return;
         }
 
-        $this->substances->each(function (Substance $substance) use ($atomCount) {
-            $substance->atom *= $atomCount;
-        });
+        $this->substances->first()->atom = $atomCount;
+
     }
 
     public function lewisStructure(): array
