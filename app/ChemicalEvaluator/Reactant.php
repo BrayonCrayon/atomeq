@@ -97,119 +97,57 @@ class Reactant extends Operand
     public function assignCharges(): void
     {
         $polyatomicIons = $this->substances->where('isPolyatomic', true);
-        $regularElements = $this->substances->where('isPolyatomic', false);
+        $nonPolySubstances = $this->substances->where('isPolyatomic', false);
 
         if ($this->substances->isEmpty() || $this->substances->count() === 1 && $polyatomicIons->count() === 1) {
             return;
         }
 
-        if ($polyatomicIons->count() > 0 && $regularElements->count() > 0) {
-            $regularElements->first()->charge = ($polyatomicIons->first()->charge * -1);
+        if ($polyatomicIons->count() > 0 && $nonPolySubstances->count() > 0) {
+            $nonPolySubstances->first()->charge = ($polyatomicIons->first()->charge * -1);
 
             return;
         }
 
         $elements = Element::query()
             ->with('type')
-            ->whereIn('symbol', $regularElements->pluck('element')->toArray())
+            ->whereIn('symbol', $nonPolySubstances->pluck('element')->toArray())
             ->get();
 
-        $hasMetal = $elements->filter(fn ($el) => $el->metal);
+        $includesMetals = $elements->filter(fn ($el) => $el->metal)->count() > 0;
 
-        if ($hasMetal->count() > 0) {
-            $regularElements->each(function (Substance $current, int $idx) use ($regularElements, $elements) {
+        $this->calculateCharges($nonPolySubstances, $elements, $includesMetals);
 
-                $next = $regularElements[$idx + 1] ?? null;
+        if (!$includesMetals) {
+            $hardSetCharges = collect([
+                'F' => -1,
+                'H' => 1,
+                'O' => -2,
+            ]);
+            $nonPolySubstances->whereIn('element', $hardSetCharges->keys())
+                ->each(function (Substance $substance) use ($hardSetCharges) {
+                    $substance->charge = $hardSetCharges[$substance->element];
+                });
 
-                $currentElement = $elements->first(fn ($el) => $el->symbol === $current->element);
-                $currentElementValency = $this->valencyLookup($currentElement->symbol);
-
-                if (!$current->charge) {
-                    $current->charge = $currentElementValency->first()->valency;
-                }
-
-                if (!$next) {
-                    $this->netCharge += $current->charge * $current->atom;
-
-                    return;
-                }
-
-                $nextElement = $elements->first(fn ($el) => $el->symbol === $next->element);
-
-                $nextElementValency = $this->valencyLookup($nextElement->symbol);
-
-                $current->charge = $currentElement->electronegativity > $nextElement->electronegativity ? $current->charge * -1 : $current->charge;
-                $this->netCharge += $current->charge * $current->atom;
-
-                $next->charge = $nextElementValency->first()->valency;
-                $next->charge = $nextElement->electronegativity > $currentElement->electronegativity ? $next->charge * -1 : $next->charge;
-            });
-        }
-
-        $allNonMetal = Element::query()
-            ->with('type')
-            ->whereIn('symbol', $regularElements->pluck('element')->toArray())
-            ->where('metal', false)
-            ->get();
-
-        if ($allNonMetal->count() === $regularElements->count()) {
-            $fluorine = $regularElements->where('element', 'F')->first();
-            if ($fluorine) {
-                $fluorine->charge = -1;
-            }
-
-            $hydrogen = $regularElements->where('element', 'H')->first();
-            if ($hydrogen) {
-                $hydrogen->charge = 1;
-            }
-
-            $oxygen = $regularElements->where('element', 'O')->first();
-            if ($oxygen) {
-                $oxygen->charge = -2;
-            }
-
-            $halogens = $allNonMetal->where('type.name', 'halogen');
-            $regularElements
+            $halogens = $elements->where('type.name', 'halogen');
+            $nonPolySubstances
                 ->filter(fn (Substance $substance) => $halogens->some('symbol', $substance->element))
                 ->each(function (Substance $halogenSubstance) {
                     $halogenSubstance->charge = -1;
                 });
 
-            $elementsWithoutCharge = $regularElements->filter(fn ($el) => $el->charge == null);
-
-            $elementsWithoutCharge->each(function (Substance $left, int $idx) use ($elementsWithoutCharge) {
-
-                $next = $elementsWithoutCharge[$idx + 1] ?? null;
-
-                $leftElement = Element::query()->where('symbol', $left->element)->first();
-                $leftElementOxidationState = self::oxidationStates[$leftElement->symbol][0];
-                $left->charge = $leftElementOxidationState;
-
-                if (!$next) {
-                    return;
-                }
-
-                $rightElement = Element::query()->where('symbol', $next->element)->first();
-                $rightElementOxidationState = self::oxidationStates[$rightElement->symbol][0];
-
-                $left->charge = $leftElement->electronegativity > $rightElement->electronegativity ? $left->charge * -1 : $left->charge;
-
-                $next->charge = $rightElementOxidationState;
-                $next->charge = $rightElement->electronegativity > $leftElement->electronegativity ? $next->charge * -1 : $next->charge;
-            });
-
-            $specialCases = $regularElements->whereIn('element', self::NET_NEUTRAL_CHARGE)->first();
+            $specialCases = $nonPolySubstances->whereIn('element', self::NET_NEUTRAL_CHARGE);
 
             $this->netCharge = 0;
-            $regularElements->filter(fn ($el) => !in_array($el->element, self::NET_NEUTRAL_CHARGE))
+            $nonPolySubstances->filter(fn ($el) => !in_array($el->element, self::NET_NEUTRAL_CHARGE))
                 ->each(function (Substance $sub) {
                     $this->netCharge += $sub->charge * $sub->atom;
                 });
 
-            if ($specialCases) {
-                $specialCases->charge = $this->netCharge * -1;
+            $specialCases->each(function (Substance $sub) {
+                $sub->charge = $this->netCharge * -1;
                 $this->netCharge = 0;
-            }
+            });
         }
     }
 
@@ -248,6 +186,50 @@ class Reactant extends Operand
 
         $this->substances->first()->atom = $atomCount;
 
+    }
+
+    public function getValencyOrOxidationState(string $symbol, bool $valency): int
+    {
+        if ($valency) {
+            return $this->valencyLookup($symbol)->first()->valency;
+        }
+
+        return $this->oxidationLookup($symbol);
+    }
+
+    public function calculateCharges(Collection $substancesCollection, Collection $elements, bool $includesMetals): void
+    {
+        $substancesCollection->each(function (Substance $current, int $idx) use ($substancesCollection, $elements, $includesMetals) {
+
+            $next = $substancesCollection[$idx + 1] ?? null;
+
+            if (!$current->charge) {
+                $currentElementValency = $this->getValencyOrOxidationState($current->element, $includesMetals);
+                $current->charge = $currentElementValency;
+            }
+
+            if ($next) {
+
+                $nextElementValency = $this->getValencyOrOxidationState($next->element, $includesMetals);
+                $next->charge = $nextElementValency;
+
+                $currentElementElectronegativity = $elements->first(fn ($el) => $el->symbol === $current->element)->electronegativity;
+                $nextElementElectronegativity = $elements->first(fn ($el) => $el->symbol === $next->element)->electronegativity;
+
+                if ($currentElementElectronegativity > $nextElementElectronegativity) {
+                    $current->charge = $current->charge * -1;
+                } elseif ($currentElementElectronegativity < $nextElementElectronegativity) {
+                    $next->charge = $next->charge * -1;
+                }
+            }
+
+            $this->netCharge += $current->charge * $current->atom;
+        });
+    }
+
+    private function oxidationLookup(string $symbol): int
+    {
+        return self::oxidationStates[$symbol][0];
     }
 
     public function lewisStructure(): array
