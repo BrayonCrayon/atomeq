@@ -45,9 +45,9 @@ class Reactant extends Operand
 
     public int $netCharge = 0;
     public LewisService $lewis;
-    public const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?(?:<sup>[0-9]*[+\-]<\/sup>)?/';
+    private const SUBSTANCE_REGEX = '/[A-Z][a-z]?(?:<sub>[0-9]+<\/sub>)?(?:<sup>[0-9]*[+\-]<\/sup>)?/';
 
-    public const NET_NEUTRAL_CHARGE = ['C', 'P'];
+    private const NET_NEUTRAL_CHARGE = ['C', 'P'];
 
     public function __construct(?string $reactant = null)
     {
@@ -119,35 +119,7 @@ class Reactant extends Operand
         $this->calculateCharges($nonPolySubstances, $elements, $includesMetals);
 
         if (!$includesMetals) {
-            $hardSetCharges = collect([
-                'F' => -1,
-                'H' => 1,
-                'O' => -2,
-            ]);
-            $nonPolySubstances->whereIn('element', $hardSetCharges->keys())
-                ->each(function (Substance $substance) use ($hardSetCharges) {
-                    $substance->charge = $hardSetCharges[$substance->element];
-                });
-
-            $halogens = $elements->where('type.name', 'halogen');
-            $nonPolySubstances
-                ->filter(fn (Substance $substance) => $halogens->some('symbol', $substance->element))
-                ->each(function (Substance $halogenSubstance) {
-                    $halogenSubstance->charge = -1;
-                });
-
-            $specialCases = $nonPolySubstances->whereIn('element', self::NET_NEUTRAL_CHARGE);
-
-            $this->netCharge = 0;
-            $nonPolySubstances->filter(fn ($el) => !in_array($el->element, self::NET_NEUTRAL_CHARGE))
-                ->each(function (Substance $sub) {
-                    $this->netCharge += $sub->charge * $sub->atom;
-                });
-
-            $specialCases->each(function (Substance $sub) {
-                $sub->charge = $this->netCharge * -1;
-                $this->netCharge = 0;
-            });
+            $this->nonMetalSpecific($nonPolySubstances, $elements);
         }
     }
 
@@ -165,7 +137,7 @@ class Reactant extends Operand
     {
         if ($this->substances->count() > 1) {
 
-            return $this->substances->reduce(fn ($sub) => $sub?->charge ?? 0);
+            return $this->substances->reduce(fn ($carry, $sub) => $carry + $sub->charge);
         }
 
         return $this->substances->first()->isPolyatomic
@@ -175,30 +147,36 @@ class Reactant extends Operand
 
     public function setAtomCount(int $atomCount): void
     {
-        if ($this->substances->count() > 1) {
-
-            $this->substances->each(function (Substance $substance) use ($atomCount) {
-                $substance->atom *= $atomCount;
-            });
+        if ($this->substances->count() == 1) {
+            $this->substances->first()->atom = $atomCount;
 
             return;
         }
 
-        $this->substances->first()->atom = $atomCount;
-
+        $this->substances->each(function (Substance $substance) use ($atomCount) {
+            $substance->atom *= $atomCount;
+        });
     }
 
-    public function getValencyOrOxidationState(string $symbol, bool $valency): int
+    public function getValencyOrOxidationState(string $symbol, bool $useValency): int
     {
-        if ($valency) {
+        if ($useValency) {
             return $this->valencyLookup($symbol)->first()->valency;
         }
 
         return $this->oxidationLookup($symbol);
     }
 
+    /**
+     * @param Collection<int, Substance> $substancesCollection
+     * @param Collection<int, Element> $elements
+     * @param bool $includesMetals
+     * @return void
+     */
     public function calculateCharges(Collection $substancesCollection, Collection $elements, bool $includesMetals): void
     {
+        $elements = $elements->keyBy('symbol');
+
         $substancesCollection->each(function (Substance $current, int $idx) use ($substancesCollection, $elements, $includesMetals) {
 
             $next = $substancesCollection[$idx + 1] ?? null;
@@ -213,8 +191,8 @@ class Reactant extends Operand
                 $nextElementValency = $this->getValencyOrOxidationState($next->element, $includesMetals);
                 $next->charge = $nextElementValency;
 
-                $currentElementElectronegativity = $elements->first(fn ($el) => $el->symbol === $current->element)->electronegativity;
-                $nextElementElectronegativity = $elements->first(fn ($el) => $el->symbol === $next->element)->electronegativity;
+                $currentElementElectronegativity = $elements[$current->element]->electronegativity;
+                $nextElementElectronegativity = $elements[$next->element]->electronegativity;
 
                 if ($currentElementElectronegativity > $nextElementElectronegativity) {
                     $current->charge = $current->charge * -1;
@@ -230,6 +208,44 @@ class Reactant extends Operand
     private function oxidationLookup(string $symbol): int
     {
         return self::oxidationStates[$symbol][0];
+    }
+
+    /**
+     * @param Collection $nonPolySubstances
+     * @param Collection $elements
+     * @return void
+     */
+    public function nonMetalSpecific(Collection $nonPolySubstances, Collection $elements): void
+    {
+        $hardSetCharges = collect([
+            'F' => -1,
+            'H' => 1,
+            'O' => -2,
+        ]);
+
+        $nonPolySubstances->whereIn('element', $hardSetCharges->keys())
+            ->each(function (Substance $substance) use ($hardSetCharges) {
+                $substance->charge = $hardSetCharges[$substance->element];
+            });
+
+        $nonPolySubstances
+            ->filter(fn(Substance $substance) => $elements->where('type.name', 'halogen')->some('symbol', $substance->element))
+            ->each(function (Substance $halogenSubstance) {
+                $halogenSubstance->charge = -1;
+            });
+
+        $specialCases = $nonPolySubstances->whereIn('element', self::NET_NEUTRAL_CHARGE);
+
+        $this->netCharge = 0;
+        $nonPolySubstances->filter(fn($el) => !in_array($el->element, self::NET_NEUTRAL_CHARGE))
+            ->each(function (Substance $sub) {
+                $this->netCharge += $sub->charge * $sub->atom;
+            });
+
+        $specialCases->each(function (Substance $sub) {
+            $sub->charge = $this->netCharge * -1;
+            $this->netCharge = 0;
+        });
     }
 
     public function lewisStructure(): array
