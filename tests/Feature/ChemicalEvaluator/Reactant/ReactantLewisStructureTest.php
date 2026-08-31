@@ -80,6 +80,50 @@ describe("ReactantLewisStructure", function() {
             $electronOctetCount = ($target->lewis->bonds->count() * 8);
             expect($target->lewis->remainingValenceElectrons)->toEqual($total - $electronOctetCount);
         });
+
+        test('will calculate formal charges and upgrade bonds between P and S elements', function () {
+            $expectedFormalCharges = collect([
+              'Br' => [0,0,0],
+              'P' => [0],
+              'S' => [0],
+            ]);
+            $expectedBondLevel = ['Br' => 1, 'S' => 2];
+            $target = new Reactant('PBr<sub>3</sub>S');
+
+            $target->lewisStructure();
+
+            expect($target->lewis->formalCharges->toArray())->toEqual($expectedFormalCharges->toArray());
+            $target->lewis->bonds->each(function (Bond $bond) use ($expectedBondLevel) {
+                expect($bond->order)->toEqual($expectedBondLevel[$bond->bondedElement]);
+            });
+        });
+        /**
+         * TODO: ASK our boy ChatGPT about this
+         *  Formal charge classification:
+         *          0            → ideal
+         *          +1 or -1     → acceptable (if on the right atom) -> specifically to this
+         *          ±2 or larger → unfavorable
+         *          positive on a highly electronegative atom → unfavorable
+         *          negative on a low-electronegativity atom  → unfavorable
+         */
+    });
+
+    describe("SO₂", function () {
+        test('will calculate formal charges and upgrade bonds for oxygen elements', function () {
+            $expectedFormalCharges = collect([
+                'O' => [0,0],
+                'S' => [0],
+            ]);
+            $expectedBondLevel = ['S' => 1, 'O' => 2];
+            $target = new Reactant('SO<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            expect($target->lewis->formalCharges->toArray())->toEqual($expectedFormalCharges->toArray());
+            $target->lewis->bonds->each(function (Bond $bond) use ($expectedBondLevel) {
+                expect($bond->order)->toEqual($expectedBondLevel[$bond->bondedElement]);
+            });
+        });
     });
 
     describe("H2O", function() {
@@ -115,6 +159,28 @@ describe("ReactantLewisStructure", function() {
             $total = 8;
             $electronOctetCount = ($target->lewis->bonds->count() * 2);
             expect($target->lewis->remainingValenceElectrons)->toEqual($total - $electronOctetCount);
+        });
+
+        test('will put remaining electrons on the central atom', function () {
+            $target = new Reactant('H<sub>2</sub>O');
+
+            $target->lewisStructure();
+
+            $total = 8;
+            $electronOctetCount = ($target->lewis->bonds->count() * 2);
+            expect($target->lewis->centralElementAtoms)->toEqual($total - $electronOctetCount);
+        });
+
+        test('will calculate formal charges', function () {
+            $expectedFormalCharges = collect([
+                'H' => [0,0],
+                'O' => [0],
+            ]);
+            $target = new Reactant('H<sub>2</sub>O');
+
+            $target->lewisStructure();
+
+            expect($target->lewis->formalCharges->toArray())->toEqual($expectedFormalCharges->toArray());
         });
     });
 });

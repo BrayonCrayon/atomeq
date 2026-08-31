@@ -921,10 +921,12 @@ FUNCTION buildLewisStructure(formula):
 
         Formal charge classification:
             0            → ideal
-            +1 or -1     → acceptable (if on the right atom)
+            +1 or -1     → often acceptable, with preference for:
+                negative charge on the more electronegative atom
+                positive charge on the less electronegative atom
             ±2 or larger → unfavorable
-            positive on a highly electronegative atom → unfavorable
-            negative on a low-electronegativity atom  → unfavorable
+                positive on a highly electronegative atom → unfavorable
+                negative on a low-electronegativity atom  → unfavorable
 
         Moving a lone pair into a bond concretely:
             Take 2 electrons sitting as a lone pair on the

@@ -4,6 +4,7 @@
 namespace App\ChemicalEvaluator;
 
 use App\Models\Element;
+use App\Models\Valency;
 use Cache;
 use Illuminate\Support\Collection;
 
@@ -16,6 +17,9 @@ trait ChemicalHelpers {
         return (int)$atomsOfLeft;
     }
 
+    /**
+     * @return Collection<int, Valency>
+     * */
     function valencyLookup(string $element): Collection
     {
         $elements = Cache::remember('valency-lookup', 3600, function () {
