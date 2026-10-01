@@ -65,10 +65,12 @@ class LewisService
     {
         $this->connectivity = collect();
 
-        $atoms = $this->expandAtoms($substances);
-        $valences = Element::query()->whereIn('symbol', array_unique($atoms))->pluck('valence', 'symbol');
+        $atoms = $this->expandAtoms($substances)->map(fn($element) => new BondedElement($element));
+        $valences = Element::query()
+            ->whereIn('symbol', $atoms->pluck('element')->unique())
+            ->pluck('valence', 'symbol');
 
-        $centralIndex = array_search($this->centralAtom, $atoms);
+        $centralIndex = $atoms->search(fn($item) => $item->element === $this->centralAtom);
         $placed = [
             $centralIndex => [
                 'depth' => 0,
@@ -137,17 +139,14 @@ class LewisService
 
     /**
      * One entry per atom, e.g. H₂SO₄ → ['H', 'H', 'S', 'O', 'O', 'O', 'O']
-     *
-     * @return array<int, string>
      */
-    private function expandAtoms(Collection $substances): array
+    private function expandAtoms(Collection $substances): Collection
     {
         return $substances
             ->flatMap(fn(Substance $sub) => $sub->isPolyatomic
                 ? $this->expandAtoms($sub->polyatomicSubstances)
                 : array_fill(0, $sub->atom, $sub->element))
-            ->values()
-            ->all();
+            ->values();
     }
 
     public function calculateTotalValenceElectrons(Collection $substances): void
@@ -209,7 +208,7 @@ class LewisService
                     $item->push($formalCharge);
                 });
             } else {
-                $bondedElectrons = $this->bonds->where('centralElement', $symbol)->sum(fn (Bond $bond) => $bond->order * 2);
+                $bondedElectrons = $this->bonds->where('centralElement', $symbol)->sum(fn (Bond $bond) => $bond->level * 2);
                 $formalCharge = $valenceElectrons - (($this->remainingValenceElectrons) + ($bondedElectrons / 2));
                 $item->push($formalCharge);
             }
@@ -226,7 +225,7 @@ class LewisService
 
         $atomsToUpgrade->each(function(string $symbol) {
             $this->bonds->filter(fn (Bond $bond) => $bond->bondedElement === $symbol)
-                ->each(fn (Bond $bond) => $bond->order++);
+                ->each(fn (Bond $bond) => $bond->level++);
         });
     }
 

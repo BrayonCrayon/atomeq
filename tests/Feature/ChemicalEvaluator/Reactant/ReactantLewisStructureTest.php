@@ -1,6 +1,7 @@
 <?php
 
 use App\ChemicalEvaluator\Bond;
+use App\ChemicalEvaluator\BondedElement;
 use App\ChemicalEvaluator\Reactant;
 
 describe("ReactantLewisStructure", function() {
@@ -107,7 +108,7 @@ describe("ReactantLewisStructure", function() {
 
             expect($target->calculatedStructures->first()->formalCharges->toArray())->toEqual($expectedFormalCharges->toArray());
             $target->calculatedStructures->first()->bonds->each(function (Bond $bond) use ($expectedBondLevel) {
-                expect($bond->order)->toEqual($expectedBondLevel[$bond->bondedElement]);
+                expect($bond->level)->toEqual($expectedBondLevel[$bond->bondedElement]);
             });
         });
         /**
@@ -134,7 +135,7 @@ describe("ReactantLewisStructure", function() {
 
             expect($target->calculatedStructures->first()->formalCharges->toArray())->toEqual($expectedFormalCharges->toArray());
             $target->calculatedStructures->first()->bonds->each(function (Bond $bond) use ($expectedBondLevel) {
-                expect($bond->order)->toEqual($expectedBondLevel[$bond->bondedElement]);
+                expect($bond->level)->toEqual($expectedBondLevel[$bond->bondedElement]);
             });
         });
     });
@@ -225,14 +226,30 @@ describe("ReactantLewisStructure", function() {
         });
 
         test('structure will have correct bonds', function () {
+            $oxigens = [new BondedElement('O'), new BondedElement('O'), new BondedElement('O'), new BondedElement('O')];
+            $sulfur = new BondedElement('S');
+            $hydrogens = [new BondedElement('H'),new BondedElement('H')];
+
+
             $expectedBonds = collect([
-               new Bond('O', 'S', 2, 8),
-               new Bond('O', 'S', 2, 8),
-               new Bond('O', 'S', 1, 8),
-               new Bond('O', 'S', 1, 8),
-                new Bond('H', 'O', 1, 2),
-                new Bond('H', 'O', 1, 2),
+               new Bond($oxigens[0], $sulfur, 2, 8),
+               new Bond($oxigens[1], $sulfur, 2, 8),
+
+                new Bond($oxigens[2], $sulfur, 1, 8),
+               new Bond($oxigens[3], $sulfur, 1, 8),
+
+                new Bond($hydrogens[0], $oxigens[2], 1, 2),
+                new Bond($hydrogens[1], $oxigens[3], 1, 2),
             ]);
+
+//            $expectedBonds = collect([
+//               new Bond('O', 'S', 2, 8),
+//               new Bond('O', 'S', 2, 8),
+//               new Bond('O', 'S', 1, 8),
+//               new Bond('O', 'S', 1, 8),
+//                new Bond('H', 'O', 1, 2),
+//                new Bond('H', 'O', 1, 2),
+//            ]);
 
             $target = new Reactant('H<sub>2</sub>SO<sub>4</sub>');
 
