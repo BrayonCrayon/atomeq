@@ -2,9 +2,14 @@
 
 namespace App\ChemicalEvaluator;
 
+use Illuminate\Support\Collection;
+
 class BondedElement
 {
-    public function __construct(public string $element)
+    public Collection $connections;
+    public int $formalCharge = 0;
+    public function __construct(public string $element, public int $storedElectrons = 2)
     {
+        $this->connections = collect();
     }
 }

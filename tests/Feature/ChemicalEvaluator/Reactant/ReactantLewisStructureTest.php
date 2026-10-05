@@ -4,10 +4,10 @@ use App\ChemicalEvaluator\Bond;
 use App\ChemicalEvaluator\BondedElement;
 use App\ChemicalEvaluator\Reactant;
 
-describe("ReactantLewisStructure", function() {
+describe("ReactantLewisStructure", function () {
 
-    describe("PBr₃S", function() {
-        test('structure will have correct valence electron count', function() {
+    describe("PBr₃S", function () {
+        test('structure will have correct valence electron count', function () {
             $target = new Reactant('PBr<sub>3</sub>S');
 
             $lewisHamilton = $target->lewisStructure();
@@ -16,7 +16,7 @@ describe("ReactantLewisStructure", function() {
             expect($lewisHamilton)->not()->toBeNull();
         });
 
-        test('structure will remove valence electron count when ion charge is positive', function() {
+        test('structure will remove valence electron count when ion charge is positive', function () {
             $target = new Reactant('PBr<sub>3</sub>S<sup>+</sup>');
 
             $lewisHamilton = $target->lewisStructure();
@@ -25,7 +25,7 @@ describe("ReactantLewisStructure", function() {
             expect($lewisHamilton)->not()->toBeNull();
         });
 
-        test('structure will remove valence electron count when ion charge is negative', function() {
+        test('structure will remove valence electron count when ion charge is negative', function () {
             $target = new Reactant('PBr<sub>3</sub>S<sup>-</sup>');
 
             $lewisHamilton = $target->lewisStructure();
@@ -34,7 +34,7 @@ describe("ReactantLewisStructure", function() {
             expect($lewisHamilton)->not()->toBeNull();
         });
 
-        test('structure will choose a starting central atom', function() {
+        test('structure will choose a starting central atom', function () {
             $target = new Reactant('PBr<sub>3</sub>S');
 
             $target->lewisStructure();
@@ -68,7 +68,7 @@ describe("ReactantLewisStructure", function() {
 
             expect($target->calculatedStructures->first()->bonds)->toHaveCount(4);
 
-            $mappedBonds = $target->calculatedStructures->first()->bonds->map(function(Bond $bond) {
+            $mappedBonds = $target->calculatedStructures->first()->bonds->map(function (Bond $bond) {
                 return [
                     'central' => $bond->centralElement,
                     'outer' => $bond->bondedElement
@@ -97,9 +97,9 @@ describe("ReactantLewisStructure", function() {
 
         test('will calculate formal charges and upgrade bonds between P and S elements', function () {
             $expectedFormalCharges = collect([
-              'Br' => [0,0,0],
-              'P' => [0],
-              'S' => [0],
+                'Br' => [0, 0, 0],
+                'P' => [0],
+                'S' => [0],
             ]);
             $expectedBondLevel = ['Br' => 1, 'S' => 2];
             $target = new Reactant('PBr<sub>3</sub>S');
@@ -125,7 +125,7 @@ describe("ReactantLewisStructure", function() {
     describe("SO₂", function () {
         test('will calculate formal charges and upgrade bonds for oxygen elements', function () {
             $expectedFormalCharges = collect([
-                'O' => [0,0],
+                'O' => [0, 0],
                 'S' => [0],
             ]);
             $expectedBondLevel = ['S' => 1, 'O' => 2];
@@ -140,8 +140,8 @@ describe("ReactantLewisStructure", function() {
         });
     });
 
-    describe("H2O", function() {
-        test('structure will have correct valence electron count', function() {
+    describe("H2O", function () {
+        test('structure will have correct valence electron count', function () {
             $target = new Reactant('H<sub>2</sub>O');
 
             $target->lewisStructure();
@@ -160,7 +160,7 @@ describe("ReactantLewisStructure", function() {
             ]);
         });
 
-        test('structure will choose a starting central atom ignoring H', function() {
+        test('structure will choose a starting central atom ignoring H', function () {
             $target = new Reactant('H<sub>2</sub>O');
 
             $target->lewisStructure();
@@ -198,7 +198,7 @@ describe("ReactantLewisStructure", function() {
 
         test('will calculate formal charges', function () {
             $expectedFormalCharges = collect([
-                'H' => [0,0],
+                'H' => [0, 0],
                 'O' => [0],
             ]);
             $target = new Reactant('H<sub>2</sub>O');
@@ -226,42 +226,36 @@ describe("ReactantLewisStructure", function() {
         });
 
         test('structure will have correct bonds', function () {
-            $oxigens = [new BondedElement('O'), new BondedElement('O'), new BondedElement('O'), new BondedElement('O')];
+            $oxygens = [
+                new BondedElement('O'),
+                new BondedElement('O'),
+                new BondedElement('O'),
+                new BondedElement('O')
+            ];
             $sulfur = new BondedElement('S');
-            $hydrogens = [new BondedElement('H'),new BondedElement('H')];
+            $hydrogens = [new BondedElement('H'), new BondedElement('H')];
 
 
             $expectedBonds = collect([
-               new Bond($oxigens[0], $sulfur, 2, 8),
-               new Bond($oxigens[1], $sulfur, 2, 8),
-
-                new Bond($oxigens[2], $sulfur, 1, 8),
-               new Bond($oxigens[3], $sulfur, 1, 8),
-
-                new Bond($hydrogens[0], $oxigens[2], 1, 2),
-                new Bond($hydrogens[1], $oxigens[3], 1, 2),
+                new Bond($oxygens[0], $sulfur, 2, 8),
+                new Bond($oxygens[1], $sulfur, 2, 8),
+                new Bond($oxygens[2], $sulfur, 1, 8),
+                new Bond($oxygens[3], $sulfur, 1, 8),
+                new Bond($hydrogens[0], $oxygens[2], 1, 2),
+                new Bond($hydrogens[1], $oxygens[3], 1, 2),
             ]);
-
-//            $expectedBonds = collect([
-//               new Bond('O', 'S', 2, 8),
-//               new Bond('O', 'S', 2, 8),
-//               new Bond('O', 'S', 1, 8),
-//               new Bond('O', 'S', 1, 8),
-//                new Bond('H', 'O', 1, 2),
-//                new Bond('H', 'O', 1, 2),
-//            ]);
 
             $target = new Reactant('H<sub>2</sub>SO<sub>4</sub>');
 
             $target->lewisStructure();
 
             $centralAtomBonds = $target->calculatedStructures->first()->bonds;
-            expect($centralAtomBonds->count())->toEqual(6);
-            expect($centralAtomBonds->sortBy('order'))->toEqual($expectedBonds);
+            expect($centralAtomBonds->count())->toEqual(6)
+                ->and($centralAtomBonds->sortBy('order'))->toEqual($expectedBonds);
         });
 
-       test('will calculate formal charges correctly', function () {
+        test('will calculate formal charges correctly', function () {
 
-       })->todo();
+        })->todo();
     });
 });

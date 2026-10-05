@@ -13,6 +13,7 @@ class LewisService
     public int $totalValenceElectrons = 0;
     public int $remainingValenceElectrons = 0;
     public Collection $bonds;
+    public Collection $bondedElements;
     public Collection $formalCharges;
 
     public Collection $previousFormalCharges;
@@ -36,6 +37,7 @@ class LewisService
     public function __construct()
     {
         $this->bonds = collect();
+        $this->bondedElements = collect();
         $this->formalCharges = collect();
         $this->previousFormalCharges = collect();
         $this->connectivity = collect();
@@ -65,12 +67,12 @@ class LewisService
     {
         $this->connectivity = collect();
 
-        $atoms = $this->expandAtoms($substances)->map(fn($element) => new BondedElement($element));
+        $this->bondedElements = $this->expandAtoms($substances);
         $valences = Element::query()
-            ->whereIn('symbol', $atoms->pluck('element')->unique())
+            ->whereIn('symbol', $this->bondedElements->pluck('element')->unique())
             ->pluck('valence', 'symbol');
 
-        $centralIndex = $atoms->search(fn($item) => $item->element === $this->centralAtom);
+        $centralIndex = $this->bondedElements->search(fn($item) => $item->element === $this->centralAtom);
         $placed = [
             $centralIndex => [
                 'depth' => 0,
@@ -78,17 +80,22 @@ class LewisService
             ],
         ];
 
-        $unplaced = collect($atoms)
+        $unplaced = $this->bondedElements
             ->except($centralIndex)
-            ->sortBy(fn(string $element) => [
-                in_array($element, self::TERMINAL_ATOMS) ? 1 : 0,
-                $this->electronegativeLookup($element),
+            ->sortBy(fn(BondedElement $item) => [
+                in_array($item->element, self::TERMINAL_ATOMS) ? 1 : 0,
+                $this->electronegativeLookup($item->element),
             ]);
 
-        foreach ($unplaced as $index => $element) {
+        foreach ($unplaced as $index => $bondedElement) {
             $hostIndex = collect($placed)
                 ->filter(fn(array $host) => $host['openSlots'] > 0)
-                ->map(fn(array $host, int $i) => [...$host, 'score' => $this->connectivityScore($element, $atoms[$i])])
+                ->map(function (array $host, int $i) use ($bondedElement) {
+                    return [
+                        ...$host,
+                        'score' => $this->connectivityScore($bondedElement->element, $this->bondedElements[$i]->element)
+                    ];
+                })
                 ->filter(fn(array $host) => $host['score'] > 0)
                 ->sortBy([['score', 'desc'], ['depth', 'asc'], ['openSlots', 'desc']])
                 ->keys()
@@ -99,11 +106,11 @@ class LewisService
                 return false;
             }
 
-            $this->connectivity->push([$element, $atoms[$hostIndex]]);
+            $this->connectivity->push([$bondedElement, $this->bondedElements[$hostIndex]]);
             $placed[$hostIndex]['openSlots']--;
             $placed[$index] = [
                 'depth' => $placed[$hostIndex]['depth'] + 1,
-                'openSlots' => $this->bondCapacity($element, $valences[$element]) - 1,
+                'openSlots' => $this->bondCapacity($bondedElement->element, $valences[$bondedElement->element]) - 1,
             ];
         }
 
@@ -146,7 +153,8 @@ class LewisService
             ->flatMap(fn(Substance $sub) => $sub->isPolyatomic
                 ? $this->expandAtoms($sub->polyatomicSubstances)
                 : array_fill(0, $sub->atom, $sub->element))
-            ->values();
+            ->values()
+            ->map(fn ($element) => new BondedElement($element));
     }
 
     public function calculateTotalValenceElectrons(Collection $substances): void
@@ -175,43 +183,36 @@ class LewisService
     public function assignOutsideBondsLonePairs(): void
     {
         $this->bonds->each(function (Bond $bond) {
-            $toMoveOver = (8 - $bond->storedElectrons);
+            $toMoveOver = (8 - $bond->leftElement->storedElectrons);
 
-            if ($bond->bondedElement == 'H') {
+            if ($bond->leftElement->element === 'H') {
                 return;
             }
 
             $this->remainingValenceElectrons -= $toMoveOver;
-            $bond->storedElectrons = 8;
+            $bond->leftElement->storedElectrons = 8;
         });
     }
 
     public function calculateFormalCharges(): void
     {
+        // TODO: Create bondedElements and set them inside "expandAtoms".
+        //          - Refactor to not rely on bond collection here.
         $listOfSymbols = collect([
-            ...$this->bonds->pluck('bondedElement')->unique(),
+            ...$this->bonds->pluck('leftElement')->pluck('element')->unique(),
             $this->centralAtom
         ]);
 
-        $listOfSymbols->each(fn($symbol) => $this->formalCharges[$symbol] = collect());
         $elements = Element::query()->whereIn('symbol', $listOfSymbols)->get();
 
-        $this->formalCharges->each(function (Collection $item, string $symbol) use ($elements) {
-            $valenceElectrons = $elements->where('symbol', $symbol)->first()->valence;
+        $bondedElements = $this->bonds->map(fn($bond) => [$bond->leftElement, $bond->rightElement])
+            ->flatten()
+            ->unique(fn (BondedElement $item) => spl_object_id($item));
 
-            if ($this->centralAtom !== $symbol) {
-
-                $this->bonds->where('bondedElement', $symbol)->each(function ($bond) use($valenceElectrons, $item){
-
-                    $bondElectrons = $bond->order * 2;
-                    $formalCharge = $valenceElectrons - (($bond->storedElectrons - $bondElectrons) + ($bondElectrons / 2));
-                    $item->push($formalCharge);
-                });
-            } else {
-                $bondedElectrons = $this->bonds->where('centralElement', $symbol)->sum(fn (Bond $bond) => $bond->level * 2);
-                $formalCharge = $valenceElectrons - (($this->remainingValenceElectrons) + ($bondedElectrons / 2));
-                $item->push($formalCharge);
-            }
+        $bondedElements->each(function (BondedElement $bondedElement) use ($elements) {
+            $valenceElectrons = $elements->where('symbol', $bondedElement->element)->first()->valence;
+            $bondElectrons = $bondedElement->connections->sum('level') * 2;
+            $bondedElement->formalCharge = $valenceElectrons - (($bondedElement->storedElectrons - $bondElectrons) + ($bondElectrons / 2));
         });
     }
 
@@ -224,8 +225,8 @@ class LewisService
         $this->previousFormalCharges = new Collection($this->formalCharges);
 
         $atomsToUpgrade->each(function(string $symbol) {
-            $this->bonds->filter(fn (Bond $bond) => $bond->bondedElement === $symbol)
-                ->each(fn (Bond $bond) => $bond->level++);
+            $this->bonds->filter(fn (Bond $bond) => $bond->leftElement->element === $symbol)
+                ->each(fn(Bond $bond) => $bond->level++);
         });
     }
 
