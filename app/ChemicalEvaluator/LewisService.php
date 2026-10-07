@@ -9,8 +9,14 @@ class LewisService
 {
     use ChemicalHelpers;
 
-    public string $centralAtom = '';
     public int $totalValenceElectrons = 0;
+    /**
+     * TODO: redo $centralAtom and $remainingValenceElectrons;
+     *
+     * $centralAtom should be the BondedElement of the chosen central atom
+     * $remainingValenceElectrons should be the storedElectrons inside the central bondedElement
+     */
+    public string $centralAtom = '';
     public int $remainingValenceElectrons = 0;
     public Collection $bonds;
     public Collection $bondedElements;
@@ -31,7 +37,7 @@ class LewisService
     }
 
     public bool $hasUpdatingChanged {
-        get => $this->formalCharges->toArray() !== $this->previousFormalCharges->toArray();
+        get => $this->bondedElements->toArray() !== $this->previousFormalCharges->toArray();
     }
 
     public function __construct()
@@ -154,7 +160,7 @@ class LewisService
                 ? $this->expandAtoms($sub->polyatomicSubstances)
                 : array_fill(0, $sub->atom, $sub->element))
             ->values()
-            ->map(fn ($element) => new BondedElement($element));
+            ->map(fn ($element) => $element instanceof BondedElement ? $element : new BondedElement($element));
     }
 
     public function calculateTotalValenceElectrons(Collection $substances): void
@@ -182,34 +188,25 @@ class LewisService
 
     public function assignOutsideBondsLonePairs(): void
     {
-        $this->bonds->each(function (Bond $bond) {
-            $toMoveOver = (8 - $bond->leftElement->storedElectrons);
+        $this->bondedElements->each(function (BondedElement $bondedElement) {
+            $toMoveOver = (8 - $bondedElement->storedElectrons);
 
-            if ($bond->leftElement->element === 'H') {
+            if ($bondedElement->element === 'H') {
                 return;
             }
 
             $this->remainingValenceElectrons -= $toMoveOver;
-            $bond->leftElement->storedElectrons = 8;
+            $bondedElement->storedElectrons = 8;
         });
     }
 
     public function calculateFormalCharges(): void
     {
-        // TODO: Create bondedElements and set them inside "expandAtoms".
-        //          - Refactor to not rely on bond collection here.
-        $listOfSymbols = collect([
-            ...$this->bonds->pluck('leftElement')->pluck('element')->unique(),
-            $this->centralAtom
-        ]);
+        $listOfSymbols = $this->bondedElements->pluck('element')->unique();
 
         $elements = Element::query()->whereIn('symbol', $listOfSymbols)->get();
 
-        $bondedElements = $this->bonds->map(fn($bond) => [$bond->leftElement, $bond->rightElement])
-            ->flatten()
-            ->unique(fn (BondedElement $item) => spl_object_id($item));
-
-        $bondedElements->each(function (BondedElement $bondedElement) use ($elements) {
+        $this->bondedElements->each(function (BondedElement $bondedElement) use ($elements) {
             $valenceElectrons = $elements->where('symbol', $bondedElement->element)->first()->valence;
             $bondElectrons = $bondedElement->connections->sum('level') * 2;
             $bondedElement->formalCharge = $valenceElectrons - (($bondedElement->storedElectrons - $bondElectrons) + ($bondElectrons / 2));
@@ -218,20 +215,22 @@ class LewisService
 
     public function upgradeBonds(): void
     {
-        $atomsToUpgrade = $this->formalCharges
-            ->filter(fn(Collection $charges, string $symbol) => $charges->sum() !== 0 && $symbol !== $this->centralAtom)
-            ->map(fn($_, string $symbol) => $symbol);
+        $atomsToUpgrade = $this->bondedElements
+            ->filter(fn(BondedElement $item) => $item->formalCharge !== 0 && $item->element !== $this->centralAtom);
 
-        $this->previousFormalCharges = new Collection($this->formalCharges);
+        $this->previousFormalCharges = new Collection($this->bondedElements->toArray());
 
-        $atomsToUpgrade->each(function(string $symbol) {
-            $this->bonds->filter(fn (Bond $bond) => $bond->leftElement->element === $symbol)
-                ->each(fn(Bond $bond) => $bond->level++);
+        $atomsToUpgrade->each(function(BondedElement $item) {
+            $bondToUpgrade = $item->connections->first(fn(Bond $bond) => $bond->rightElement->element !== 'H');
+
+            $bondToUpgrade->level++;
         });
     }
 
     public function hasUnfavorableCharges(): bool
     {
-        return $this->formalCharges->flatten()->some(fn(int $value) => $value > 0 || $value < 0);
+        return $this->bondedElements->some(function (BondedElement $element) {
+            return $element->formalCharge > 0 || $element->formalCharge < 0;
+        });
     }
 }

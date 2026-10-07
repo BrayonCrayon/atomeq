@@ -268,7 +268,11 @@ class Reactant extends Operand
         }
 
         // step 4.1 Assign connectitivities
-        $service->setupConnectivity($this->substances);
+        if (! $service->setupConnectivity($this->substances))
+        {
+            $this->calculatedStructures[$service->centralAtom] = $service;
+            return $this->lewisStructure();
+        }
 
         // Step 5 & 6
         $service->assignDefaultBonds();

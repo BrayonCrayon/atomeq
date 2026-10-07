@@ -227,22 +227,22 @@ describe("ReactantLewisStructure", function () {
 
         test('structure will have correct bonds', function () {
             $oxygens = [
-                new BondedElement('O'),
-                new BondedElement('O'),
-                new BondedElement('O'),
-                new BondedElement('O')
+                new BondedElement('O', 8),
+                new BondedElement('O', 8),
+                new BondedElement('O', 8),
+                new BondedElement('O', 8)
             ];
-            $sulfur = new BondedElement('S');
+            $sulfur = new BondedElement('S', 8);
             $hydrogens = [new BondedElement('H'), new BondedElement('H')];
 
 
             $expectedBonds = collect([
-                new Bond($oxygens[0], $sulfur, 2, 8),
-                new Bond($oxygens[1], $sulfur, 2, 8),
-                new Bond($oxygens[2], $sulfur, 1, 8),
-                new Bond($oxygens[3], $sulfur, 1, 8),
-                new Bond($hydrogens[0], $oxygens[2], 1, 2),
-                new Bond($hydrogens[1], $oxygens[3], 1, 2),
+                new Bond($oxygens[0], $sulfur, 2),
+                new Bond($oxygens[1], $sulfur, 2),
+                new Bond($oxygens[2], $sulfur, 1),
+                new Bond($oxygens[3], $sulfur, 1),
+                new Bond($hydrogens[0], $oxygens[2], 1),
+                new Bond($hydrogens[1], $oxygens[3], 1),
             ]);
 
             $target = new Reactant('H<sub>2</sub>SO<sub>4</sub>');
@@ -251,7 +251,8 @@ describe("ReactantLewisStructure", function () {
 
             $centralAtomBonds = $target->calculatedStructures->first()->bonds;
             expect($centralAtomBonds->count())->toEqual(6)
-                ->and($centralAtomBonds->sortBy('order'))->toEqual($expectedBonds);
+                ->and($centralAtomBonds->sortBy(['leftElement.element', 'rightElement.element']))
+                ->toEqual($expectedBonds->sortBy(['leftElement.element', 'rightElement.element']));
         });
 
         test('will calculate formal charges correctly', function () {
