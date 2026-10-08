@@ -254,8 +254,6 @@ class Reactant extends Operand
     {
         $service = new LewisService();
 
-        /** TODO: Refer to lewis_structure_connectivity_bond_upgrade_checklist.md document.
-        */
         // Step 2
         // Step 3
         $service->calculateTotalValenceElectrons($this->substances);
@@ -270,7 +268,7 @@ class Reactant extends Operand
         // step 4.1 Assign connectitivities
         if (! $service->setupConnectivity($this->substances))
         {
-            $this->calculatedStructures[$service->centralAtom] = $service;
+            $this->calculatedStructures[$service->centralAtom->element] = $service;
             return $this->lewisStructure();
         }
 
@@ -296,7 +294,7 @@ class Reactant extends Operand
             $service->calculateFormalCharges();
         }
 
-        $this->calculatedStructures[$service->centralAtom] = $service;
+        $this->calculatedStructures[$service->centralAtom->element] = $service;
 
         return $this->lewisStructure();
     }

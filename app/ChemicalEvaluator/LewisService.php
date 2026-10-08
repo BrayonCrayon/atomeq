@@ -16,7 +16,7 @@ class LewisService
      * $centralAtom should be the BondedElement of the chosen central atom
      * $remainingValenceElectrons should be the storedElectrons inside the central bondedElement
      */
-    public string $centralAtom = '';
+    public BondedElement $centralAtom;
     public int $remainingValenceElectrons = 0;
     public Collection $bonds;
     public Collection $bondedElements;
@@ -63,7 +63,7 @@ class LewisService
             return;
         }
 
-        $this->centralAtom = $substance->element;
+        $this->centralAtom = new BondedElement($substance->element, $this->remainingValenceElectrons);
     }
 
     /**
@@ -74,15 +74,18 @@ class LewisService
         $this->connectivity = collect();
 
         $this->bondedElements = $this->expandAtoms($substances);
+
         $valences = Element::query()
             ->whereIn('symbol', $this->bondedElements->pluck('element')->unique())
             ->pluck('valence', 'symbol');
 
-        $centralIndex = $this->bondedElements->search(fn($item) => $item->element === $this->centralAtom);
+        $centralIndex = $this->bondedElements->search(fn($item) => $item->element === $this->centralAtom->element);
+        $this->bondedElements[$centralIndex] = $this->centralAtom;
+
         $placed = [
             $centralIndex => [
                 'depth' => 0,
-                'openSlots' => $this->bondCapacity($this->centralAtom, $valences[$this->centralAtom], true),
+                'openSlots' => $this->bondCapacity($this->centralAtom->element, $valences[$this->centralAtom->element], true),
             ],
         ];
 
@@ -182,7 +185,7 @@ class LewisService
     {
         $this->connectivity->each(function ($pair) {
             $this->bonds->push(new Bond($pair[0], $pair[1], 1));
-            $this->remainingValenceElectrons -= 2;
+            $this->centralAtom->storedElectrons -= 2;
         });
     }
 
@@ -195,8 +198,11 @@ class LewisService
                 return;
             }
 
-            $this->remainingValenceElectrons -= $toMoveOver;
-            $bondedElement->storedElectrons = 8;
+            $this->centralAtom->storedElectrons -= $toMoveOver;
+
+            if ($this->centralAtom !== $bondedElement) {
+                $bondedElement->storedElectrons = 8;
+            }
         });
     }
 
@@ -216,7 +222,7 @@ class LewisService
     public function upgradeBonds(): void
     {
         $atomsToUpgrade = $this->bondedElements
-            ->filter(fn(BondedElement $item) => $item->formalCharge !== 0 && $item->element !== $this->centralAtom);
+            ->filter(fn(BondedElement $item) => $item->formalCharge !== 0 && $item->element !== $this->centralAtom->element);
 
         $this->previousFormalCharges = new Collection($this->bondedElements->toArray());
 
