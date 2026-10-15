@@ -10,14 +10,7 @@ class LewisService
     use ChemicalHelpers;
 
     public int $totalValenceElectrons = 0;
-    /**
-     * TODO: redo $centralAtom and $remainingValenceElectrons;
-     *
-     * $centralAtom should be the BondedElement of the chosen central atom
-     * $remainingValenceElectrons should be the storedElectrons inside the central bondedElement
-     */
     public BondedElement $centralAtom;
-    public int $remainingValenceElectrons = 0;
     public Collection $bonds;
     public Collection $bondedElements;
     public Collection $formalCharges;
@@ -63,7 +56,7 @@ class LewisService
             return;
         }
 
-        $this->centralAtom = new BondedElement($substance->element, $this->remainingValenceElectrons);
+        $this->centralAtom = new BondedElement($substance->element);
     }
 
     /**
@@ -177,31 +170,34 @@ class LewisService
             $valence = Element::query()->where('symbol', $sub->element)->first()->valence;
             $this->totalValenceElectrons += ($valence * $sub->atom) - $sub->ionCharge;
         });
-
-        $this->remainingValenceElectrons = $this->totalValenceElectrons;
     }
 
     public function assignDefaultBonds(): void
     {
         $this->connectivity->each(function ($pair) {
             $this->bonds->push(new Bond($pair[0], $pair[1], 1));
-            $this->centralAtom->storedElectrons -= 2;
         });
     }
 
     public function assignOutsideBondsLonePairs(): void
     {
+        $this->centralAtom->lonePairs = $this->totalValenceElectrons / 2;
+
         $this->bondedElements->each(function (BondedElement $bondedElement) {
-            $toMoveOver = (8 - $bondedElement->storedElectrons);
 
             if ($bondedElement->element === 'H') {
                 return;
             }
 
-            $this->centralAtom->storedElectrons -= $toMoveOver;
-
             if ($this->centralAtom !== $bondedElement) {
-                $bondedElement->storedElectrons = 8;
+                $remainingOctetPairs = (4 - $bondedElement->bondedPairs);
+
+                if ($this->centralAtom->lonePairs - $remainingOctetPairs < 0) {
+                    return;
+                }
+
+                $this->centralAtom->lonePairs -= $remainingOctetPairs;
+                $bondedElement->lonePairs = $remainingOctetPairs;
             }
         });
     }
@@ -214,8 +210,8 @@ class LewisService
 
         $this->bondedElements->each(function (BondedElement $bondedElement) use ($elements) {
             $valenceElectrons = $elements->where('symbol', $bondedElement->element)->first()->valence;
-            $bondElectrons = $bondedElement->connections->sum('level') * 2;
-            $bondedElement->formalCharge = $valenceElectrons - (($bondedElement->storedElectrons - $bondElectrons) + ($bondElectrons / 2));
+            //TODO: sus code
+            $bondedElement->formalCharge = $valenceElectrons - $bondedElement->loneElectrons - $bondedElement->bondedPairs;
         });
     }
 

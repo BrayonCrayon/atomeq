@@ -227,12 +227,12 @@ describe("ReactantLewisStructure", function () {
 
         test('structure will have correct bonds', function () {
             $oxygens = [
-                new BondedElement('O', 8),
-                new BondedElement('O', 8),
-                new BondedElement('O', 8),
-                new BondedElement('O', 8)
+                new BondedElement('O', 3),
+                new BondedElement('O', 3),
+                new BondedElement('O', 2),
+                new BondedElement('O', 2)
             ];
-            $sulfur = new BondedElement('S', 8);
+            $sulfur = new BondedElement('S');
             $hydrogens = [new BondedElement('H'), new BondedElement('H')];
 
 
