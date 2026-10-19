@@ -251,8 +251,8 @@ describe("ReactantLewisStructure", function () {
 
             $centralAtomBonds = $target->calculatedStructures->first()->bonds;
             expect($centralAtomBonds->count())->toEqual(6)
-                ->and($centralAtomBonds->sortBy(['leftElement.element', 'rightElement.element']))
-                ->toEqual($expectedBonds->sortBy(['leftElement.element', 'rightElement.element']));
+                ->and($centralAtomBonds->sortBy([['level','asc']])->values()->toArray())
+                ->toEqual($expectedBonds->sortBy([['level','asc']])->values()->toArray());
         });
 
         test('will calculate formal charges correctly', function () {

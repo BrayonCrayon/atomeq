@@ -288,7 +288,7 @@ class Reactant extends Operand
             $service->upgradeBonds();
 
             // Step 7
-            $service->assignOutsideBondsLonePairs();
+//            $service->assignOutsideBondsLonePairs(); TODO: commented because we were overriding our lonePairs
 
             // Step 10
             $service->calculateFormalCharges();

@@ -2,9 +2,10 @@
 
 namespace App\ChemicalEvaluator;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
 
-class BondedElement
+class BondedElement implements Arrayable
 {
     public Collection $connections;
     public int $formalCharge = 0;
@@ -21,5 +22,15 @@ class BondedElement
     public function __construct(public string $element, public int $lonePairs = 0)
     {
         $this->connections = collect();
+    }
+
+    public function toArray(): array
+    {
+        return [
+            "formalCharge" => $this->formalCharge,
+            "lonePairs" => $this->lonePairs,
+            "bondPairs" => $this->bondedPairs,
+            "element" => $this->element
+        ];
     }
 }

@@ -30,7 +30,7 @@ class LewisService
     }
 
     public bool $hasUpdatingChanged {
-        get => $this->bondedElements->toArray() !== $this->previousFormalCharges->toArray();
+        get => $this->bonds->toArray() !== $this->previousFormalCharges->toArray();
     }
 
     public function __construct()
@@ -181,7 +181,8 @@ class LewisService
 
     public function assignOutsideBondsLonePairs(): void
     {
-        $this->centralAtom->lonePairs = $this->totalValenceElectrons / 2;
+        $bondedUsedPairs = $this->bonds->sum('level');
+        $this->centralAtom->lonePairs = ($this->totalValenceElectrons / 2) - $bondedUsedPairs;
 
         $this->bondedElements->each(function (BondedElement $bondedElement) {
 
@@ -192,7 +193,7 @@ class LewisService
             if ($this->centralAtom !== $bondedElement) {
                 $remainingOctetPairs = (4 - $bondedElement->bondedPairs);
 
-                if ($this->centralAtom->lonePairs - $remainingOctetPairs < 0) {
+                if ($this->centralAtom->lonePairs === 0 || $this->centralAtom->lonePairs - $remainingOctetPairs < 0) {
                     return;
                 }
 
@@ -210,7 +211,6 @@ class LewisService
 
         $this->bondedElements->each(function (BondedElement $bondedElement) use ($elements) {
             $valenceElectrons = $elements->where('symbol', $bondedElement->element)->first()->valence;
-            //TODO: sus code
             $bondedElement->formalCharge = $valenceElectrons - $bondedElement->loneElectrons - $bondedElement->bondedPairs;
         });
     }
@@ -220,7 +220,8 @@ class LewisService
         $atomsToUpgrade = $this->bondedElements
             ->filter(fn(BondedElement $item) => $item->formalCharge !== 0 && $item->element !== $this->centralAtom->element);
 
-        $this->previousFormalCharges = new Collection($this->bondedElements->toArray());
+        // TODO: we shouldn't be upgrading infinitely
+        $this->previousFormalCharges = new Collection($this->bonds->toArray());
 
         $atomsToUpgrade->each(function(BondedElement $item) {
             $bondToUpgrade = $item->connections->first(fn(Bond $bond) => $bond->rightElement->element !== 'H');
