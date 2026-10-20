@@ -39,7 +39,7 @@ describe("ReactantLewisStructure", function () {
 
             $target->lewisStructure();
 
-            expect($target->calculatedStructures->first()->centralAtom)->toEqual('P');
+            expect($target->calculatedStructures->first()->centralAtom->element)->toEqual('P');
         });
 
         test('will connect every Br and S to P', function () {
@@ -47,7 +47,14 @@ describe("ReactantLewisStructure", function () {
 
             $target->lewisStructure();
 
-            expect($target->calculatedStructures->first()->connectivity->toArray())->toEqual([
+            $output = $target->calculatedStructures->first()->connectivity->map(function ($connection) {
+                return [
+                    $connection[0]->element,
+                    $connection[1]->element,
+                ];
+            })->toArray();
+
+            expect($output)->toEqual([
                 ['S', 'P'],
                 ['Br', 'P'],
                 ['Br', 'P'],
@@ -55,36 +62,32 @@ describe("ReactantLewisStructure", function () {
             ]);
         });
 
-        test('will create bond pairings for PBr₃S', function () {
+        test('will create and upgrade bond pairings for PBr₃S', function () {
+            $bromines = [
+                new BondedElement('Br', 3),
+                new BondedElement('Br', 3),
+                new BondedElement('Br', 3),
+            ];
+            $sulfur = new BondedElement('S', 2);
+            $phosphorous = new BondedElement('P');
+
             $expectedBonds = collect([
-                ['central' => 'P', 'outer' => 'Br'],
-                ['central' => 'P', 'outer' => 'Br'],
-                ['central' => 'P', 'outer' => 'Br'],
-                ['central' => 'P', 'outer' => 'S'],
+                new Bond($sulfur, $phosphorous, 2),
+                new Bond($bromines[0], $phosphorous),
+                new Bond($bromines[1], $phosphorous),
+                new Bond($bromines[2], $phosphorous),
             ]);
             $target = new Reactant('PBr<sub>3</sub>S');
 
             $target->lewisStructure();
 
-            expect($target->calculatedStructures->first()->bonds)->toHaveCount(4);
+            $bonds = $target->calculatedStructures->first()->bonds;
 
-            $mappedBonds = $target->calculatedStructures->first()->bonds->map(function (Bond $bond) {
-                return [
-                    'central' => $bond->centralElement,
-                    'outer' => $bond->bondedElement
-                ];
-            });
-
-            expect($mappedBonds)->toEqual($expectedBonds);
+            expect($bonds)->toHaveCount(4)
+            ->and($bonds->sortBy([['level','asc']])->values()->toArray())
+            ->toEqual($expectedBonds->sortBy([['level','asc']])->values()->toArray());
         });
 
-        /**
-         * For context reference see the nonmetal_oxidation_state_engine_design.md document
-         *
-         * This test accounts for steps 6, 7;
-         * - Removing 2 electrons on remainingValenceElectrons for every bond pair.
-         * - For every atom bond; we'll need to re-fill the atom up to 8. We remove the calculated refill from remainingValenceElectrons
-         */
         test('will subtract 2 electrons for every bond and provide electrons from Octet rule to bonds', function () {
             $target = new Reactant('PBr<sub>3</sub>S');
 
@@ -92,50 +95,29 @@ describe("ReactantLewisStructure", function () {
 
             $total = 32;
             $electronOctetCount = ($target->calculatedStructures->first()->bonds->count() * 8);
-            expect($target->calculatedStructures->first()->remainingValenceElectrons)->toEqual($total - $electronOctetCount);
+            expect($target->calculatedStructures->first()->centralAtom->loneElectrons)->toEqual($total - $electronOctetCount);
         });
-
-        test('will calculate formal charges and upgrade bonds between P and S elements', function () {
-            $expectedFormalCharges = collect([
-                'Br' => [0, 0, 0],
-                'P' => [0],
-                'S' => [0],
-            ]);
-            $expectedBondLevel = ['Br' => 1, 'S' => 2];
-            $target = new Reactant('PBr<sub>3</sub>S');
-
-            $target->lewisStructure();
-
-            expect($target->calculatedStructures->first()->formalCharges->toArray())->toEqual($expectedFormalCharges->toArray());
-            $target->calculatedStructures->first()->bonds->each(function (Bond $bond) use ($expectedBondLevel) {
-                expect($bond->level)->toEqual($expectedBondLevel[$bond->bondedElement]);
-            });
-        });
-        /**
-         * TODO: ASK our boy ChatGPT about this
-         *  Formal charge classification:
-         *          0            → ideal
-         *          +1 or -1     → acceptable (if on the right atom) -> specifically to this
-         *          ±2 or larger → unfavorable
-         *          positive on a highly electronegative atom → unfavorable
-         *          negative on a low-electronegativity atom  → unfavorable
-         */
     });
 
     describe("SO₂", function () {
         test('will calculate formal charges and upgrade bonds for oxygen elements', function () {
             $expectedFormalCharges = collect([
-                'O' => [0, 0],
-                'S' => [0],
+                'O' => 0,
+                'S' => 0,
             ]);
             $expectedBondLevel = ['S' => 1, 'O' => 2];
             $target = new Reactant('SO<sub>2</sub>');
 
             $target->lewisStructure();
 
-            expect($target->calculatedStructures->first()->formalCharges->toArray())->toEqual($expectedFormalCharges->toArray());
-            $target->calculatedStructures->first()->bonds->each(function (Bond $bond) use ($expectedBondLevel) {
-                expect($bond->level)->toEqual($expectedBondLevel[$bond->bondedElement]);
+            $calculatedStructure = $target->calculatedStructures->first();
+
+            $calculatedStructure->bondedElements->each(function (BondedElement $item) use ($expectedFormalCharges) {
+                expect($item->formalCharge)->toEqual($expectedFormalCharges[$item->element]);
+            });
+
+            $calculatedStructure->bonds->each(function (Bond $bond) use ($expectedBondLevel) {
+                expect($bond->level)->toEqual($expectedBondLevel[$bond->leftElement->element]);
             });
         });
     });
@@ -154,7 +136,14 @@ describe("ReactantLewisStructure", function () {
 
             $target->lewisStructure();
 
-            expect($target->calculatedStructures->first()->connectivity->toArray())->toEqual([
+            $output = $target->calculatedStructures->first()->connectivity->map(function ($connection) {
+                return [
+                    $connection[0]->element,
+                    $connection[1]->element,
+                ];
+            })->toArray();
+
+            expect($output)->toEqual([
                 ['H', 'O'],
                 ['H', 'O'],
             ]);
@@ -165,25 +154,7 @@ describe("ReactantLewisStructure", function () {
 
             $target->lewisStructure();
 
-            expect($target->calculatedStructures->first()->centralAtom)->toEqual('O');
-        });
-
-        /**
-         * For context reference see the nonmetal_oxidation_state_engine_design.md document
-         *
-         * This test accounts for steps 6, 7;
-         * - Removing 2 electrons on remainingValenceElectrons for every bond pair.
-         * - For every atom bond; we'll need to re-fill the atom up to 8. We remove the calculated refill from remainingValenceElectrons
-         * - SPECIAL CASE: Hydrogen only gets 2
-         */
-        test('will subtract 2 electrons for every bond and provide electrons from Octet rule to bonds', function () {
-            $target = new Reactant('H<sub>2</sub>O');
-
-            $target->lewisStructure();
-
-            $total = 8;
-            $electronOctetCount = ($target->calculatedStructures->first()->bonds->count() * 2);
-            expect($target->calculatedStructures->first()->remainingValenceElectrons)->toEqual($total - $electronOctetCount);
+            expect($target->calculatedStructures->first()->centralAtom->element)->toEqual('O');
         });
 
         test('will put remaining electrons on the central atom', function () {
@@ -193,19 +164,24 @@ describe("ReactantLewisStructure", function () {
 
             $total = 8;
             $electronOctetCount = ($target->calculatedStructures->first()->bonds->count() * 2);
-            expect($target->calculatedStructures->first()->centralElementAtoms)->toEqual($total - $electronOctetCount);
+            expect($target->calculatedStructures->first()->centralAtom->loneElectrons)->toEqual($total - $electronOctetCount);
         });
 
         test('will calculate formal charges', function () {
+
             $expectedFormalCharges = collect([
-                'H' => [0, 0],
-                'O' => [0],
+                'H' => 0,
+                'O' => 0,
             ]);
             $target = new Reactant('H<sub>2</sub>O');
 
             $target->lewisStructure();
 
-            expect($target->calculatedStructures->first()->formalCharges->toArray())->toEqual($expectedFormalCharges->toArray());
+            $calculatedStructure = $target->calculatedStructures->first();
+
+            $calculatedStructure->bondedElements->each(function (BondedElement $item) use ($expectedFormalCharges) {
+                expect($item->formalCharge)->toEqual($expectedFormalCharges[$item->element]);
+            });
         });
     });
 
@@ -215,7 +191,14 @@ describe("ReactantLewisStructure", function () {
 
             $target->lewisStructure();
 
-            expect($target->calculatedStructures->first()->connectivity->toArray())->toEqual([
+            $output = $target->calculatedStructures->first()->connectivity->map(function ($connection) {
+                return [
+                    $connection[0]->element,
+                    $connection[1]->element,
+                ];
+            })->toArray();
+
+            expect($output)->toEqual([
                 ['O', 'S'],
                 ['O', 'S'],
                 ['O', 'S'],

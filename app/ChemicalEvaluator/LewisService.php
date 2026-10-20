@@ -13,9 +13,8 @@ class LewisService
     public BondedElement $centralAtom;
     public Collection $bonds;
     public Collection $bondedElements;
-    public Collection $formalCharges;
 
-    public Collection $previousFormalCharges;
+    public ?int $previousFormalCharge = null;
 
     /** @var Collection<int, array{0: string, 1: string}> [outer, host] pairs */
     public Collection $connectivity;
@@ -29,16 +28,10 @@ class LewisService
         get => $this->totalValenceElectrons - $this->bonds->sum('storedElectrons');
     }
 
-    public bool $hasUpdatingChanged {
-        get => $this->bonds->toArray() !== $this->previousFormalCharges->toArray();
-    }
-
     public function __construct()
     {
         $this->bonds = collect();
         $this->bondedElements = collect();
-        $this->formalCharges = collect();
-        $this->previousFormalCharges = collect();
         $this->connectivity = collect();
     }
 
@@ -219,9 +212,6 @@ class LewisService
     {
         $atomsToUpgrade = $this->bondedElements
             ->filter(fn(BondedElement $item) => $item->formalCharge !== 0 && $item->element !== $this->centralAtom->element);
-
-        // TODO: we shouldn't be upgrading infinitely
-        $this->previousFormalCharges = new Collection($this->bonds->toArray());
 
         $atomsToUpgrade->each(function(BondedElement $item) {
             $bondToUpgrade = $item->connections->first(fn(Bond $bond) => $bond->rightElement->element !== 'H');

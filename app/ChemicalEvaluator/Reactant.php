@@ -250,6 +250,7 @@ class Reactant extends Operand
         });
     }
 
+    // TODO: Figure out where to call him and order the formal charges
     public function lewisStructure(): Collection
     {
         $service = new LewisService();
@@ -281,17 +282,31 @@ class Reactant extends Operand
         // Step 10
         $service->calculateFormalCharges();
 
+
+        $previousFormalCharge = $service->bondedElements->sum(fn (BondedElement $ele) => abs($ele->formalCharge));
+
         // Step 11 loop
-        while($service->hasUnfavorableCharges() && $service->hasUpdatingChanged)
+        while($service->hasUnfavorableCharges())
         {
             // Step 11
             $service->upgradeBonds();
 
             // Step 7
-            $service->assignOutsideBondsLonePairs(); //TODO: commented because we were overriding our lonePairs
+            $service->assignOutsideBondsLonePairs();
 
             // Step 10
             $service->calculateFormalCharges();
+
+            // Confirm continue
+            $currentFormalCharge = $service->bondedElements->sum(fn (BondedElement $ele) => abs($ele->formalCharge));
+
+            if ($previousFormalCharge <= $currentFormalCharge)
+            {
+                // TODO: undo upgradeBonds or if you will... degradeBonds
+                break;
+            }
+            $previousFormalCharge = $currentFormalCharge;
+
         }
 
         $this->calculatedStructures[$service->centralAtom->element] = $service;
