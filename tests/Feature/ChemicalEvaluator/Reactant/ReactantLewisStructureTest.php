@@ -120,6 +120,14 @@ describe("ReactantLewisStructure", function () {
                 expect($bond->level)->toEqual($expectedBondLevel[$bond->leftElement->element]);
             });
         });
+
+        test("will ensure and rollback any bad calculated structures when upgrading", function () {
+            $target = new Reactant('SO<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            expect($target->calculatedStructures)->toHaveCount(2);
+        });
     });
 
     describe("H2O", function () {
@@ -237,9 +245,17 @@ describe("ReactantLewisStructure", function () {
                 ->and($centralAtomBonds->sortBy([['level','asc']])->values()->toArray())
                 ->toEqual($expectedBonds->sortBy([['level','asc']])->values()->toArray());
         });
+    });
 
-        test('will calculate formal charges correctly', function () {
+    describe('O₃', function () {
+       test('final form is 1', function () {
+           $target = new Reactant('O<sub>3</sub>');
 
-        })->todo();
+           $target->lewisStructure();
+
+           $calculatedStructure = $target->calculatedStructures->first();
+
+           expect($calculatedStructure->formalChargeScore)->toBe(2);
+       });
     });
 });

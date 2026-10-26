@@ -8,7 +8,8 @@
     "require": {
         "php": "^8.4",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "myclabs/deep-copy": "^1.14"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -11,12 +11,11 @@ class BondedElement implements Arrayable
     public int $formalCharge = 0;
     public int $loneElectrons {
         get => $this->lonePairs * 2;
+        set(int $value) {}
     }
     public int $bondedPairs {
         get => $this->connections->sum('level');
-    }
-    public int $bondedElectrons {
-        get => $this->bondedPairs * 2;
+        set(int $value) {}
     }
 
     public function __construct(public string $element, public int $lonePairs = 0)

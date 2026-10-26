@@ -13,8 +13,10 @@ class LewisService
     public BondedElement $centralAtom;
     public Collection $bonds;
     public Collection $bondedElements;
-
-    public ?int $previousFormalCharge = null;
+    public int $formalChargeScore {
+        get => $this->bondedElements->sum(fn (BondedElement $ele) => abs($ele->formalCharge));
+        set(int $value) {}
+    }
 
     /** @var Collection<int, array{0: string, 1: string}> [outer, host] pairs */
     public Collection $connectivity;
@@ -23,10 +25,6 @@ class LewisService
     const array TERMINAL_ATOMS = ['H', 'F', 'Cl', 'Br', 'I'];
     const array EXPANDED_OCTET_ATOMS = ['Si', 'P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe'];
     const array CONNECTIVITY_SCORES = ['preferred' => 2, 'possible' => 1];
-
-    public int $centralElementAtoms {
-        get => $this->totalValenceElectrons - $this->bonds->sum('storedElectrons');
-    }
 
     public function __construct()
     {
@@ -210,14 +208,21 @@ class LewisService
 
     public function upgradeBonds(): void
     {
-        $atomsToUpgrade = $this->bondedElements
-            ->filter(fn(BondedElement $item) => $item->formalCharge !== 0 && $item->element !== $this->centralAtom->element);
+        // TODO: O3 ensure that the middle oxygen doesn't get upgraded with 2 double bonds for it's surrounding oxygen
+        $atom = $this->bondedElements
+            ->filter(fn(BondedElement $item) => $item->formalCharge !== 0 && $item !== $this->centralAtom)
+            ->first();
 
-        $atomsToUpgrade->each(function(BondedElement $item) {
-            $bondToUpgrade = $item->connections->first(fn(Bond $bond) => $bond->rightElement->element !== 'H');
+//        $atomsToUpgrade->each(function(BondedElement $item) {
+//
+//            $this->calculateFormalCharges();
+//            if ($item->formalCharge === 0) {
+//                return;
+//            }
+        $bondToUpgrade = $atom->connections->first(fn(Bond $bond) => $bond->rightElement->element !== 'H');
 
-            $bondToUpgrade->level++;
-        });
+        $bondToUpgrade->level++;
+//        });
     }
 
     public function hasUnfavorableCharges(): bool

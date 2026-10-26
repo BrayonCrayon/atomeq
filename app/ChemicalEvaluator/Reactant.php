@@ -5,6 +5,7 @@ namespace App\ChemicalEvaluator;
 use App\ChemicalEvaluator\General\Operand;
 use App\Models\Element;
 use App\Models\PolyatomicIon;
+use DeepCopy\DeepCopy;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -283,7 +284,8 @@ class Reactant extends Operand
         $service->calculateFormalCharges();
 
 
-        $previousFormalCharge = $service->bondedElements->sum(fn (BondedElement $ele) => abs($ele->formalCharge));
+        $copier = new DeepCopy();
+        $previousLewisHamilton = $copier->copy($service);
 
         // Step 11 loop
         while($service->hasUnfavorableCharges())
@@ -298,14 +300,14 @@ class Reactant extends Operand
             $service->calculateFormalCharges();
 
             // Confirm continue
-            $currentFormalCharge = $service->bondedElements->sum(fn (BondedElement $ele) => abs($ele->formalCharge));
+            $currentFormalCharge = $service->formalChargeScore;
 
-            if ($previousFormalCharge <= $currentFormalCharge)
+            if ($previousLewisHamilton->formalChargeScore <= $currentFormalCharge)
             {
-                // TODO: undo upgradeBonds or if you will... degradeBonds
+                $service = $previousLewisHamilton;
                 break;
             }
-            $previousFormalCharge = $currentFormalCharge;
+            $previousLewisHamilton = $copier->copy($service);
 
         }
 
