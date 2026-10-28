@@ -117,7 +117,7 @@ describe("ReactantLewisStructure", function () {
             });
 
             $calculatedStructure->bonds->each(function (Bond $bond) use ($expectedBondLevel) {
-                expect($bond->level)->toEqual($expectedBondLevel[$bond->leftElement->element]);
+                expect($bond->level)->toEqual($expectedBondLevel[$bond->outsideElement->element]);
             });
         });
 
@@ -244,6 +244,19 @@ describe("ReactantLewisStructure", function () {
             expect($centralAtomBonds->count())->toEqual(6)
                 ->and($centralAtomBonds->sortBy([['level','asc']])->values()->toArray())
                 ->toEqual($expectedBonds->sortBy([['level','asc']])->values()->toArray());
+        });
+    });
+
+    describe('NH₄⁺', function(){
+
+        test('checkers vs chess', function(){
+            $target = new Reactant('NH<sub>4</sub><sup>+</sup>');
+
+            $target->lewisStructure();
+
+            $calculatedStructure = $target->calculatedStructures->first();
+
+            expect($calculatedStructure->bonds)->toBeEmpty();
         });
     });
 

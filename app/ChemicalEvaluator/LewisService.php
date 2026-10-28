@@ -213,7 +213,7 @@ class LewisService
 
         $atomsToUpgrade->each(function(BondedElement $item) {
             /** @var Bond $bondToUpgrade */
-            $bondToUpgrade = $item->connections->first(fn(Bond $bond) => $bond->rightElement->element !== 'H');
+            $bondToUpgrade = $item->connections->first(fn(Bond $bond) => $bond->outsideElement->element !== 'H');
 
             if ($this->canUpgrade($bondToUpgrade))
             {
@@ -231,7 +231,7 @@ class LewisService
 
     private function canUpgrade(Bond $bond): bool
     {
-        $maxElectrons = collect(self::EXPANDED_OCTET_ATOMS)->contains($bond->rightElement->element) ? 12 : 8;
-        return $bond->leftElement->lonePairs >= 1 && $bond->rightElement->totalElectrons <= $maxElectrons -2;
+        $maxElectrons = collect(self::EXPANDED_OCTET_ATOMS)->contains($bond->insideElement->element) ? 12 : 8;
+        return $bond->outsideElement->lonePairs >= 1 && $bond->insideElement->totalElectrons <= $maxElectrons -2;
     }
 }

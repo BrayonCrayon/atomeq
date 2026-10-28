@@ -4,6 +4,7 @@ The single reference for the `app/ChemicalEvaluator` engine. It replaces these o
 `addition-operator-roadmap.md`, `addition-operator-bug-analysis.md`, `multi-substance-addition.md`,
 `valency-compound-formation.md`, `all-non-metal-charge-assignment.md`,
 `nonmetal_oxidation_state_engine_design.md` and `lewis-structure-o3-upgrade-guide.md`.
+Finished work is removed from this doc. Use git history for the details.
 
 > Status last checked against the code on **2026-10-28**. The test suite needs the `testDB` Postgres
 > host, so "status" below is read from the code, not from a test run.
@@ -39,16 +40,9 @@ Data in the DB: `elements` (`valence`, `electronegativity`, `is_diatomic`, `acti
 
 | Area | Status | Notes |
 |---|---|---|
-| Tokenizer, RPN, Evaluator | ✅ Done | |
-| Parsing (coefficients, subscripts, `<sup>` ion charges) | ✅ Done | `Substance::$ionCharge` |
-| Polyatomic ion interception | ✅ Done | Dynamic regex built from `polyatomic_ions` |
-| DB: `is_diatomic`, `activity_rank`, `element_valencies.is_default` | ✅ Done | |
-| Charges as signed magnitudes (not ±1) | ✅ Done | `Reactant::calculateCharges()` |
-| All-non-metal charge rules (H +1, halogens −1, O −2, C/P balance) | ✅ Done | `Reactant::nonMetalSpecific()`; HCCl₃ → C = +2 |
-| `UnaryOperator` + `ReactionOperator` as unary | ✅ Done | |
-| Cation-before-anion ordering | ✅ Done | `consolidateSubstances()` sorts by electronegativity |
-| Lewis structure: electrons, central atom, connectivity, single bonds, lone pairs, formal charges | ✅ Done | |
-| Lewis structure: bond upgrading | 🟡 In progress | O₃ over-upgrades (section 6.3) |
+| Tokenizer/RPN/Evaluator, parsing, polyatomic ions, DB columns, signed charges, non-metal charge rules, unary `ReactionOperator`, cation-first ordering | ✅ Done | |
+| Lewis structure, including capacity-checked bond upgrading | ✅ Done | O₃ stops at score 2; confirm with a test run. Open edge cases in section 6.3 |
+| Lewis coverage beyond the current tests | 🟡 In progress | NH₄⁺ test has wrong expectations (section 6.3) |
 | Activity-series gate | 🟡 Regressed | Logic is commented out in `ReactionOperator::operate()`; tests still expect it |
 | Neutral-compound addition (`2CO + O₂`) | ❌ Missing | Section 4.3 |
 | Molecular ordering (`N₂ + H₂` → `NH₃`, not `H₃N`) | ❌ Missing | Section 4.3 |
@@ -167,7 +161,7 @@ Inferring a metal's valency from an existing compound (FeCl₃ means Fe = +3) is
 | Single bonds for every connection | `assignDefaultBonds()` |
 | Fill outer atoms to an octet; leftovers go to the central atom | `assignOutsideBondsLonePairs()` |
 | Formal charges | `calculateFormalCharges()` |
-| Upgrade bonds while charges are unfavourable; roll back (DeepCopy) if the score stops improving | `upgradeBonds()` + loop in `Reactant::lewisStructure()` |
+| Upgrade bonds while charges are unfavourable, only where the outer atom has a lone pair and the inner atom has room (8, or 12 for `EXPANDED_OCTET_ATOMS`); roll back (DeepCopy) once the score stops strictly improving | `upgradeBonds()` + `canUpgrade()` + loop in `Reactant::lewisStructure()` |
 | Try every other central atom (recursion); results are keyed by central element | `Reactant::lewisStructure()` |
 
 Bond order is never looked up. It's 1 plus the number of lone pairs moved into that bond.
@@ -182,42 +176,18 @@ Bond order is never looked up. It's 1 plus the number of lone pairs moved into t
 
 **Octet first, formal charge second.** Formal charge only decides between structures that are already valid.
 
-### 6.3 Current bug: O₃ over-upgrades
+### 6.3 Invariants and open edge cases
 
-The O₃ test expects a final `formalChargeScore` of **2** but gets **0**.
+Why the upgrade loop is safe (checked by reading the code):
+- Every non-central atom is the outer atom of exactly one bond, the one to its host, so `upgradeBonds()` always finds a bond. Atoms with charge only on the central atom (NH₄⁺) just give an empty list.
+- The loop ends because the score is a non-negative integer that must strictly drop on each pass, or the loop rolls back.
+- An upgrade never leaves the central atom with fewer spare pairs, so if `assignOutsideBondsLonePairs()` covers every outer atom on the first pass, it keeps covering them.
 
-O₃ has 18 valence electrons, and its skeleton is `O₁ – O₀ – O₂`:
-
-| Step | Bonds (O₁–O₀, O₀–O₂) | Lone pairs (O₁, O₀, O₂) | Formal charges | Score | e⁻ around O₀ |
-|---|---|---|---|---|---|
-| Initial | 1, 1 | 3, 1, 3 | −1, +2, −1 | 4 | 6 |
-| Upgrade #1 | 2, 1 | 2, 1, 3 | 0, +1, −1 | 2 | 8 ✅ |
-| Upgrade #2 | 2, 2 | 2, 1, 2 | 0, 0, 0 | 0 | **10 ❌** |
-
-Nothing in the loop checks whether a structure is allowed; it only checks the score. The second
-upgrade lowers the score but gives a period-2 oxygen 10 electrons. SO₂, H₂SO₄ and PBr₃S pass only
-because their over-filled atom (S or P) is allowed to expand.
-
-**What to build:**
-
-1. **Electron-capacity check.** Electrons around an atom = lone electrons + 2 × `bondedPairs`. The maximum
-   is 2 for H, 8 normally, and more for `EXPANDED_OCTET_ATOMS`. Reuse the list `bondCapacity()` already uses.
-2. **Where it runs.** Preferably skip candidate bonds that would break capacity *before* upgrading. The
-   alternative is to upgrade, check, and roll back with the existing DeepCopy.
-3. **A "no valid upgrade left" signal.** Without it, `hasUnfavorableCharges()` stays true and the loop
-   never ends.
-4. **Better target choice.** A good upgrade joins an atom with a negative charge and a lone pair to give
-   to a neighbour that is positive or short of electrons, without breaking capacity. O₃'s second
-   step fails only that last condition, which is why it should stop at a score of 2.
-
-**Latent bugs in the same area:**
-- `upgradeBonds()` assumes a charged non-central atom exists. With NH₄⁺ the charge sits on the central atom, the lookup returns null, and the next line crashes.
-- The H filter checks `rightElement`, which is the host. Check "the other atom in the bond" instead.
-- A charged species can never reach a score of 0, so only the score rollback ends its loop.
-- `assignOutsideBondsLonePairs()` silently skips an atom that the central atom can't cover.
-
-**Suggested order:** add a test pinning O₃'s central atom at 8 electrons, then the capacity check,
-then the no-upgrade signal and loop exit, then smarter targets. Add NH₄⁺ as a test for the null case.
+Open:
+- **NH₄⁺ test:** it expects `bonds` to be empty. A correct result is four N–H single bonds, N = +1, score 1.
+- **Odd-electron species** (NO₂, 17 e⁻): `totalValenceElectrons / 2` gives a float that is forced into the int `lonePairs`.
+- **Electron-deficient species:** `assignOutsideBondsLonePairs()` skips an outer atom the central atom can't cover, and that atom keeps its lone pairs from the previous pass.
+- **Upgrade target choice:** only the outer atom's bond to its host is upgraded. Resonance and other placements (section 6.2, step 5) aren't explored yet.
 
 ---
 
@@ -246,8 +216,8 @@ non-metals can come from this calculation.
 
 ## 8. Suggested build order
 
-1. Fix Lewis bond upgrading (section 6.3) and get the Lewis tests green.
-2. Widen Lewis coverage: H₂, HCl, NH₃, CH₄, CO₂, then NH₄⁺, OH⁻, H₃O⁺, then O₂ and N₂, then PCl₅ and SF₆.
+1. Run the Lewis tests against `testDB` and fix the NH₄⁺ expectations (section 6.3).
+2. Widen Lewis coverage: H₂, HCl, NH₃, CH₄, CO₂, then OH⁻, H₃O⁺, then O₂ and N₂, then PCl₅ and SF₆.
 3. Calculate oxidation states from the structure (section 7) and feed them into charge assignment.
 4. Open AdditionOperator problems: the neutral guard, molecular ordering, and re-checking NaHCO₃ (section 4.3).
 5. Restore the activity gate, then add the diatomic rule and full single replacement (section 5.1).
