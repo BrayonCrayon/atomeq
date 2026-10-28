@@ -18,6 +18,11 @@ class BondedElement implements Arrayable
         set(int $value) {}
     }
 
+    public int $totalElectrons {
+        get => $this->loneElectrons + ($this->bondedPairs * 2);
+        set(int $value) {}
+    }
+
     public function __construct(public string $element, public int $lonePairs = 0)
     {
         $this->connections = collect();

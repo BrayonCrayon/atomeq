@@ -208,21 +208,18 @@ class LewisService
 
     public function upgradeBonds(): void
     {
-        // TODO: O3 ensure that the middle oxygen doesn't get upgraded with 2 double bonds for it's surrounding oxygen
-        $atom = $this->bondedElements
-            ->filter(fn(BondedElement $item) => $item->formalCharge !== 0 && $item !== $this->centralAtom)
-            ->first();
+        $atomsToUpgrade = $this->bondedElements
+            ->filter(fn(BondedElement $item) => $item->formalCharge !== 0 && $item !== $this->centralAtom);
 
-//        $atomsToUpgrade->each(function(BondedElement $item) {
-//
-//            $this->calculateFormalCharges();
-//            if ($item->formalCharge === 0) {
-//                return;
-//            }
-        $bondToUpgrade = $atom->connections->first(fn(Bond $bond) => $bond->rightElement->element !== 'H');
+        $atomsToUpgrade->each(function(BondedElement $item) {
+            /** @var Bond $bondToUpgrade */
+            $bondToUpgrade = $item->connections->first(fn(Bond $bond) => $bond->rightElement->element !== 'H');
 
-        $bondToUpgrade->level++;
-//        });
+            if ($this->canUpgrade($bondToUpgrade))
+            {
+                $bondToUpgrade->level++;
+            }
+        });
     }
 
     public function hasUnfavorableCharges(): bool
@@ -230,5 +227,11 @@ class LewisService
         return $this->bondedElements->some(function (BondedElement $element) {
             return $element->formalCharge > 0 || $element->formalCharge < 0;
         });
+    }
+
+    private function canUpgrade(Bond $bond): bool
+    {
+        $maxElectrons = collect(self::EXPANDED_OCTET_ATOMS)->contains($bond->rightElement->element) ? 12 : 8;
+        return $bond->leftElement->lonePairs >= 1 && $bond->rightElement->totalElectrons <= $maxElectrons -2;
     }
 }
