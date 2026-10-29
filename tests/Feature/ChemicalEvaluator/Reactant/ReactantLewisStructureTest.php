@@ -249,14 +249,24 @@ describe("ReactantLewisStructure", function () {
 
     describe('NH₄⁺', function(){
 
-        test('checkers vs chess', function(){
+        test('nitrogen dioxide positively charged', function(){
+            $hydrogens = collect([
+                new BondedElement('H'),
+                new BondedElement('H'),
+                new BondedElement('H'),
+                new BondedElement('H'),
+            ]);
+            $nitrogen = new BondedElement('N');
+            $nitrogen->formalCharge = 1;
+            $expectedBonds = $hydrogens->map(fn (BondedElement $outerElement) => new Bond($outerElement, $nitrogen));
             $target = new Reactant('NH<sub>4</sub><sup>+</sup>');
 
             $target->lewisStructure();
 
-            $calculatedStructure = $target->calculatedStructures->first();
-
-            expect($calculatedStructure->bonds)->toBeEmpty();
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(4)
+                ->and($result->formalChargeScore)->toEqual(1)
+                ->and($result->bonds->sortBy([['level','asc']])->values()->toArray())->toEqual($expectedBonds->sortBy([['level','asc']])->values()->toArray());
         });
     });
 

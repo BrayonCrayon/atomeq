@@ -122,11 +122,7 @@ class LewisService
             return 1;
         }
 
-        if ($isCentral && in_array($element, self::EXPANDED_OCTET_ATOMS)) {
-            return $valence;
-        }
-
-        return 8 - $valence;
+        return $valence;
     }
 
     private function connectivityScore(string $a, string $b): int
