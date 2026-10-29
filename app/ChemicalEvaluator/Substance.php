@@ -28,6 +28,8 @@ class Substance
     /** @var Collection<int, Valency>|null  */
     public Collection|null $valencies = null;
 
+    public bool $isIsomer = false;
+
     public function __construct(string $substance, public bool $isPolyatomic = false)
     {
         $this->polyatomicSubstances = collect();

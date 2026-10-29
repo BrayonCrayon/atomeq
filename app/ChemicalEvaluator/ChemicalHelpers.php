@@ -23,6 +23,7 @@ trait ChemicalHelpers {
             'C'  => 'preferred',
             'S'  => 'possible',
             'P'  => 'possible',
+            'H'  => 'possible',
         ],
 
         'C' => [
@@ -35,6 +36,7 @@ trait ChemicalHelpers {
             'N'  => 'preferred',
             'S'  => 'preferred',
             'P'  => 'possible',
+            'C'  => 'possible',
         ],
 
         'N' => [

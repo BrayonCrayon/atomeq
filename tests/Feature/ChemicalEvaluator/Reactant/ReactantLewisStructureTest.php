@@ -301,4 +301,22 @@ describe("ReactantLewisStructure", function () {
                 ->and($result->bonds->sortBy([['level','asc']])->values()->toArray())->toEqual($expectedBonds->sortBy([['level','asc']])->values()->toArray());
         });
     });
+
+    describe("H₂", function () {
+       test("hydrogen dioxide", function () {
+           $hydrogens = collect([
+               new BondedElement('H'),
+               new BondedElement('H'),
+           ]);
+           $bond = new Bond($hydrogens[0], $hydrogens[1]);
+           $target = new Reactant('H<sub>2</sub>');
+
+           $target->lewisStructure();
+
+           $result = $target->calculatedStructures->first();
+           expect($result->bonds->count())->toEqual(1)
+               ->and($result->formalChargeScore)->toEqual(0)
+               ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+       });
+    });
 });

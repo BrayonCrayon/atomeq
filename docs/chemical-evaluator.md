@@ -7,7 +7,8 @@ The single reference for the `app/ChemicalEvaluator` engine. It replaces these o
 Finished work is removed from this doc. Use git history for the details.
 
 > Status last checked against the code on **2026-10-28**. The test suite needs the `testDB` Postgres
-> host, so "status" below is read from the code, not from a test run.
+> host, so run it through Sail (`./vendor/bin/sail test`). The last run of `tests/Feature/ChemicalEvaluator`
+> had 7 failures (section 2).
 
 ---
 
@@ -26,9 +27,9 @@ Finished work is removed from this doc. Use git history for the details.
 | `Tokenizer` | Splits the equation into operands/operators and orders them as RPN |
 | `Evaluator` | Pops operands for each operator; handles both binary and unary operators |
 | `Reactant` | One formula with a coefficient: parses substances, assigns charges, builds Lewis structures |
-| `Substance` | One element (or polyatomic ion) with its atom count, charge, ion charge and valencies |
+| `Substance` | One element (or polyatomic ion) with its atom count, charge, ion charge, valencies and an `isIsomer` flag |
 | `ChemicalHelpers` | `calculateAtom()` (criss-cross/GCD), `valencyLookup()`, `electronegativeLookup()`, connectivity table |
-| `LewisService`, `Bond`, `BondedElement` | Lewis structure builder (section 6) |
+| `LewisService`, `Bond`, `BondedElement` | Lewis structure builder (sections 6.1 and 6.4) |
 | `NoReactionOperand` | Operand whose string is "No Reaction" |
 
 Data in the DB: `elements` (`valence`, `electronegativity`, `is_diatomic`, `activity_rank`),
@@ -42,7 +43,8 @@ Data in the DB: `elements` (`valence`, `electronegativity`, `is_diatomic`, `acti
 |---|---|---|
 | Tokenizer/RPN/Evaluator, parsing, polyatomic ions, DB columns, signed charges, non-metal charge rules, unary `ReactionOperator`, cation-first ordering | ✅ Done | |
 | Lewis structure, including capacity-checked bond upgrading | ✅ Done | O₃ stops at score 2; confirm with a test run. Open edge cases in section 6.3 |
-| Lewis coverage beyond the current tests | 🟡 In progress | NH₄⁺ test has wrong expectations (section 6.3) |
+| Isomer parsing (one element with a subscript, e.g. H₂, O₂) | ✅ Done | Section 6.5 |
+| Lewis coverage beyond the current tests | 🟡 In progress | H₂ passes; NH₄⁺ test has wrong expectations (section 6.3) |
 | Activity-series gate | 🟡 Regressed | Logic is commented out in `ReactionOperator::operate()`; tests still expect it |
 | Neutral-compound addition (`2CO + O₂`) | ❌ Missing | Section 4.3 |
 | Molecular ordering (`N₂ + H₂` → `NH₃`, not `H₃N`) | ❌ Missing | Section 4.3 |
@@ -50,6 +52,9 @@ Data in the DB: `elements` (`valence`, `electronegativity`, `is_diatomic`, `acti
 | Diatomic enforcement on lone products | ❌ Missing | Section 5.1 |
 | Single-replacement displacement | ❌ Missing | Section 5.1 |
 | Oxidation states from the Lewis structure | ❌ Missing | Section 7 |
+
+Failing tests in the last run: NF₂Cl charges (P gets −3 instead of +3), three
+`EvaluatorTest` cases (section 4.3) and three `ReactionOperatorTest` cases (activity gate, section 5.1).
 
 ---
 
@@ -156,7 +161,7 @@ Inferring a metal's valency from an existing compound (FeCl₃ means Fe = +3) is
 | Step | Where |
 |---|---|
 | Count valence electrons (minus ion charge) | `calculateTotalValenceElectrons()` |
-| Choose a central atom (lowest EN, never H/halogens, skipping atoms already tried) | `assignCentralAtom()` |
+| Choose a central atom (lowest EN, never halogens, never H unless the reactant is an isomer, skipping atoms already tried) | `assignCentralAtom()` |
 | Build connectivity from bond capacity + `FUNCTIONAL_CONNECTIVITY`; return false if an atom can't be placed | `setupConnectivity()` |
 | Single bonds for every connection | `assignDefaultBonds()` |
 | Fill outer atoms to an octet; leftovers go to the central atom | `assignOutsideBondsLonePairs()` |
@@ -187,7 +192,27 @@ Open:
 - **NH₄⁺ test:** it expects `bonds` to be empty. A correct result is four N–H single bonds, N = +1, score 1.
 - **Odd-electron species** (NO₂, 17 e⁻): `totalValenceElectrons / 2` gives a float that is forced into the int `lonePairs`.
 - **Electron-deficient species:** `assignOutsideBondsLonePairs()` skips an outer atom the central atom can't cover, and that atom keeps its lone pairs from the previous pass.
+- **H₂ test name:** the test passes (one H–H single bond, score 0) but is still named "hydrogen dioxide".
 - **Upgrade target choice:** only the outer atom's bond to its host is upgraded. Resonance and other placements (section 6.2, step 5) aren't explored yet.
+
+### 6.4 Bonds
+
+- `Bond` links an `outsideElement` (the outer atom) to an `insideElement` (its host) with a `level`
+  (bond order, default 1). The constructor adds the bond to both elements' `connections`.
+- `BondedElement` derives its numbers from those connections: `bondedPairs` is the sum of the bond
+  levels, `loneElectrons` is `lonePairs × 2`, and `totalElectrons` is lone electrons plus `bondedPairs × 2`.
+- `Bond::toArray()` still uses the old keys `leftElement` (outside) and `rightElement` (inside). Rename them
+  to match the properties when the test expectations are updated.
+
+### 6.5 Isomers (single-element molecules)
+
+An "isomer" here means a reactant made of one element with a subscript and nothing else (H₂, O₂, N₂).
+
+- `Reactant::parseReactant()` detects it with `$isomerPattern` and sets `Substance::$isIsomer`.
+- For an isomer, single-element polyatomic ions (peroxide `O2`) are left out of the polyatomic
+  pattern, so `O₂` on its own is plain oxygen. Inside a compound, `H₂O₂` still reads O₂ as peroxide.
+- `assignCentralAtom()` allows H as the central atom only for isomers, and `FUNCTIONAL_CONNECTIVITY`
+  now has H–H and C–C entries (both `possible`).
 
 ---
 
@@ -216,8 +241,8 @@ non-metals can come from this calculation.
 
 ## 8. Suggested build order
 
-1. Run the Lewis tests against `testDB` and fix the NH₄⁺ expectations (section 6.3).
-2. Widen Lewis coverage: H₂, HCl, NH₃, CH₄, CO₂, then OH⁻, H₃O⁺, then O₂ and N₂, then PCl₅ and SF₆.
+1. Fix the NH₄⁺ Lewis test expectations (section 6.3).
+2. Widen Lewis coverage (H₂ is done): HCl, NH₃, CH₄, CO₂, then OH⁻, H₃O⁺, then O₂ and N₂, then PCl₅ and SF₆.
 3. Calculate oxidation states from the structure (section 7) and feed them into charge assignment.
 4. Open AdditionOperator problems: the neutral guard, molecular ordering, and re-checking NaHCO₃ (section 4.3).
 5. Restore the activity gate, then add the diatomic rule and full single replacement (section 5.1).

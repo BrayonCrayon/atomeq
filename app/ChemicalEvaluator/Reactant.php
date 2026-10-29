@@ -79,8 +79,13 @@ class Reactant extends Operand
             throw new InvalidArgumentException('Reactant must contain only substance symbols');
         }
 
+        // A single element with a subscript making up the whole reactant ex: (H2, O2, N2)
+        $isomerPattern = '/^[A-Z][a-z]?<sub>[0-9]+<\/sub>$/';
+        $isIsomer = (bool) preg_match($isomerPattern, $substancesStr);
+
         $polyatomicPattern = PolyatomicIon::query()->get()
             ->map(fn (PolyatomicIon $ion) => Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', $ion->symbol))
+            ->reject(fn (string $ion) => $isIsomer && preg_match($isomerPattern, stripslashes($ion)))
             ->join('|');
 
         $substanceParts = preg_split("/($polyatomicPattern)/", $substancesStr, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
@@ -91,7 +96,9 @@ class Reactant extends Operand
             } else {
                 preg_match_all(self::SUBSTANCE_REGEX, $substance, $substanceMatches);
                 foreach ($substanceMatches[0] as $item) {
-                    $this->substances->push(new Substance($item));
+                    $sub = new Substance($item);
+                    $sub->isIsomer = $isIsomer;
+                    $this->substances->push($sub);
                 }
             }
         }
