@@ -249,7 +249,7 @@ describe("ReactantLewisStructure", function () {
 
     describe('NH₄⁺', function(){
 
-        test('nitrogen dioxide positively charged', function(){
+        test('ammonium ion', function(){
             $hydrogens = collect([
                 new BondedElement('H'),
                 new BondedElement('H'),
@@ -280,5 +280,25 @@ describe("ReactantLewisStructure", function () {
 
            expect($calculatedStructure->formalChargeScore)->toBe(2);
        });
+    });
+
+    describe('NO2', function () {
+        test('nitrogen dioxide', function () {
+            $oxygens = collect([
+                new BondedElement('O', 2),
+                new BondedElement('O', 2),
+            ]);
+            $nitrogen = new BondedElement('N');
+            $nitrogen->formalCharge = 1;
+            $expectedBonds = $oxygens->map(fn (BondedElement $outerElement) => new Bond($outerElement, $nitrogen, 2));
+            $target = new Reactant('NO<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(2)
+                ->and($result->formalChargeScore)->toEqual(1)
+                ->and($result->bonds->sortBy([['level','asc']])->values()->toArray())->toEqual($expectedBonds->sortBy([['level','asc']])->values()->toArray());
+        });
     });
 });
