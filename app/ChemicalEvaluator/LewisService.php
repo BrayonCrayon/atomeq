@@ -21,7 +21,7 @@ class LewisService
     /** @var Collection<int, array{0: string, 1: string}> [outer, host] pairs */
     public Collection $connectivity;
 
-    const array INVAILD_CENTRAL_ATOMS = ['F', 'Cl', 'Br', 'I'];
+    const array INVAILD_CENTRAL_ATOMS = ['H', 'F', 'Cl', 'Br', 'I'];
     const array TERMINAL_ATOMS = ['H', 'F', 'Cl', 'Br', 'I'];
     const array EXPANDED_OCTET_ATOMS = ['Si', 'P', 'S', 'Cl', 'As', 'Se', 'Br', 'I', 'Xe'];
     const array CONNECTIVITY_SCORES = ['preferred' => 2, 'possible' => 1];
@@ -35,15 +35,21 @@ class LewisService
 
     public function assignCentralAtom(Collection $substances, Collection $alreadyTried): void
     {
-        $substance = $substances
+        $potentialCentralElement = $substances
             ->map(fn(Substance $sub) => $sub->isPolyatomic ? $sub->polyatomicSubstances : $sub)
-            ->flatten()
-            ->filter(function (Substance $sub) {
-                return !collect([
-                    ...self::INVAILD_CENTRAL_ATOMS,
-                    ...(!$sub->isIsomer ? ["H"] : [])
-                ])->contains($sub->element);
-            })
+            ->flatten();
+
+        $potentialCentralElement = $potentialCentralElement
+            ->when(!$potentialCentralElement->every(fn(Substance $item) => $item->element === 'H'), function (Collection $items) {
+                return $items->filter(fn(Substance $item) => $item->element !== 'H');
+            });
+
+        $substance = $potentialCentralElement
+            ->when(
+                !$potentialCentralElement->every(fn(Substance $item) => collect(self::INVAILD_CENTRAL_ATOMS)->contains($item->element)),
+                function(Collection $items) {
+                    return $items->filter(fn(Substance $sub) => !collect(self::INVAILD_CENTRAL_ATOMS)->contains($sub->element));
+                })
             ->filter(fn($sub) => ! $alreadyTried->contains($sub->element) )
             ->sortBy(fn($sub) => $this->electronegativeLookup($sub->element))
             ->first();

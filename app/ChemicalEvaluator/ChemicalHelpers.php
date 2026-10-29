@@ -49,6 +49,7 @@ trait ChemicalHelpers {
             'C'  => 'preferred',
             'S'  => 'possible',
             'P'  => 'possible',
+            'N'  => 'possible'
         ],
 
         'O' => [

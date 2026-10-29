@@ -72,7 +72,7 @@ class Substance
         }
 
         if (preg_match('/[a-zA-Z]+/', $substance, $matches)) {
-            $this->element = $matches[0];
+            $this->element = $matches[0]; // TODO: Ensure the whole compound is recorded not just the first letters. Ex H₃O⁺ is recorded as H instead of H₃O
         } else {
             throw new InvalidArgumentException('Substance must be a valid element.');
         }
