@@ -319,4 +319,185 @@ describe("ReactantLewisStructure", function () {
                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
        });
     });
+
+    // HCl, NH₃, CH₄, CO₂, then OH⁻, H₃O⁺, then O₂ and N₂, then PCl₅ and SF₆.
+    describe("HCl", function () {
+        test("Hydrogen Cloride", function () {
+            $hydrogen = new BondedElement('H');
+            $chlorine = new BondedElement('Cl');
+            $bond = new Bond($hydrogen, $chlorine);
+            $target = new Reactant('HCl');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(1)
+                ->and($result->formalChargeScore)->toEqual(0)
+                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+        });
+    });
+
+    describe("NH₃", function () {
+        test("Ammonium", function () {
+            $hydrogens = collect([
+                new BondedElement('H'),
+                new BondedElement('H'),
+            ]);
+            $bond = new Bond($hydrogens[0], $hydrogens[1]);
+            $target = new Reactant('H<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(1)
+                ->and($result->formalChargeScore)->toEqual(0)
+                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+        });
+    });
+
+    describe("CH₄", function () {
+        test("Methane", function () {
+            $hydrogens = collect([
+                new BondedElement('H'),
+                new BondedElement('H'),
+            ]);
+            $bond = new Bond($hydrogens[0], $hydrogens[1]);
+            $target = new Reactant('H<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(1)
+                ->and($result->formalChargeScore)->toEqual(0)
+                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+        });
+    });
+
+    describe("CO₂", function () {
+        test("Carbon Dioxide", function () {
+            $hydrogens = collect([
+                new BondedElement('H'),
+                new BondedElement('H'),
+            ]);
+            $bond = new Bond($hydrogens[0], $hydrogens[1]);
+            $target = new Reactant('H<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(1)
+                ->and($result->formalChargeScore)->toEqual(0)
+                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+        });
+    });
+
+    describe("OH-", function () {
+        test("Hydroxide ion", function () {
+            $hydrogens = collect([
+                new BondedElement('H'),
+                new BondedElement('H'),
+            ]);
+            $bond = new Bond($hydrogens[0], $hydrogens[1]);
+            $target = new Reactant('H<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(1)
+                ->and($result->formalChargeScore)->toEqual(0)
+                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+        });
+    });
+
+    describe("H₃O⁺", function () {
+        test("Hydronium ion", function () {
+            $hydrogens = collect([
+                new BondedElement('H'),
+                new BondedElement('H'),
+            ]);
+            $bond = new Bond($hydrogens[0], $hydrogens[1]);
+            $target = new Reactant('H<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(1)
+                ->and($result->formalChargeScore)->toEqual(0)
+                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+        });
+    });
+
+    describe("O₂", function () {
+        test("Oxygen", function () {
+            $hydrogens = collect([
+                new BondedElement('H'),
+                new BondedElement('H'),
+            ]);
+            $bond = new Bond($hydrogens[0], $hydrogens[1]);
+            $target = new Reactant('H<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(1)
+                ->and($result->formalChargeScore)->toEqual(0)
+                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+        });
+    });
+
+    describe("N₂", function () {
+        test("Nitrogen", function () {
+            $hydrogens = collect([
+                new BondedElement('H'),
+                new BondedElement('H'),
+            ]);
+            $bond = new Bond($hydrogens[0], $hydrogens[1]);
+            $target = new Reactant('H<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(1)
+                ->and($result->formalChargeScore)->toEqual(0)
+                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+        });
+    });
+
+    describe("PCl₅", function () {
+        test("Phosphorus Pentachloride", function () {
+            $hydrogens = collect([
+                new BondedElement('H'),
+                new BondedElement('H'),
+            ]);
+            $bond = new Bond($hydrogens[0], $hydrogens[1]);
+            $target = new Reactant('H<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(1)
+                ->and($result->formalChargeScore)->toEqual(0)
+                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+        });
+    });
+
+    describe("SF₆", function () {
+        test("Sulfur Hexafluoride", function () {
+            $hydrogens = collect([
+                new BondedElement('H'),
+                new BondedElement('H'),
+            ]);
+            $bond = new Bond($hydrogens[0], $hydrogens[1]);
+            $target = new Reactant('H<sub>2</sub>');
+
+            $target->lewisStructure();
+
+            $result = $target->calculatedStructures->first();
+            expect($result->bonds->count())->toEqual(1)
+                ->and($result->formalChargeScore)->toEqual(0)
+                ->and($result->bonds->toArray())->toEqual(collect([$bond])->toArray());
+        });
+    });
+
+
 });
