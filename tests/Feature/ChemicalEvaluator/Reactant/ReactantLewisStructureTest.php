@@ -408,6 +408,7 @@ describe("ReactantLewisStructure", function () {
             $hydrogen = new BondedElement('H');
             $bond = new Bond($hydrogen, $oxygen);
             $target = new Reactant('OH<sup>-</sup>');
+            $oxygen->formalCharge = -1;
 
             $target->lewisStructure();
 

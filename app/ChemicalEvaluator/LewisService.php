@@ -162,6 +162,9 @@ class LewisService
         $substances->each(function (Substance $sub) {
             if ($sub->isPolyatomic) {
                 $this->calculateTotalValenceElectrons($sub->polyatomicSubstances);
+                // TODO: This calculation is breaking a lot of tests. We think it's ionCharge???
+                //          Also O2 from polyatomic Ions is coming through with SO2 which is not polyatomic.
+                $this->totalValenceElectrons -= $sub->charge;
                 return;
             }
 
