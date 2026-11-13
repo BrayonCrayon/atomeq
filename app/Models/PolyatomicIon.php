@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class PolyatomicIon extends Model
 {
-    protected $fillable = ['name', 'charge', 'symbol'];
+    protected $fillable = ['name', 'charge', 'symbol', 'is_cation'];
 }

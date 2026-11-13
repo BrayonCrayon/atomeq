@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MonatomicCation extends Model
 {
@@ -10,4 +11,9 @@ class MonatomicCation extends Model
         'element_id',
         'charge'
     ];
+
+    public function element(): BelongsTo
+    {
+        return $this->belongsTo(Element::class);
+    }
 }
