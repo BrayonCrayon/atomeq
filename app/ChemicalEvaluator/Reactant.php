@@ -4,6 +4,7 @@ namespace App\ChemicalEvaluator;
 
 use App\ChemicalEvaluator\General\Operand;
 use App\Models\Element;
+use App\Models\MonatomicCation;
 use App\Models\PolyatomicIon;
 use DeepCopy\DeepCopy;
 use Illuminate\Support\Collection;
@@ -87,6 +88,36 @@ class Reactant extends Operand
             ->map(fn (PolyatomicIon $ion) => Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', $ion->symbol))
             ->reject(fn (string $ion) => $isIsomer && preg_match($isomerPattern, stripslashes($ion)))
             ->join('|');
+
+        // Unique element symbols (Fe, Cu, etc. appear once per charge), longest first so alternation prefers "Hg" over "H"
+        $monatomicCations = MonatomicCation::query()->with('element')->get()
+            ->map(fn (MonatomicCation $cation) => $cation->element->symbol)
+            ->unique()
+            ->sortByDesc(fn (string $symbol) => strlen($symbol))
+            ->join('|');
+
+        $polyatomicCations = PolyatomicIon::query()->where('is_cation', true)->get()
+            ->map(fn (PolyatomicIon $ion) => Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', $ion->symbol))
+            ->join('|');
+
+        // A monatomic cation (with optional subscript/charge) leading the reactant, immediately followed by a polyatomic ion ex: (Na<sub>2</sub>SO<sub>4</sub>, KNO<sub>3</sub>)
+        $cationBeforePolyatomicPattern = "/^(?:$monatomicCations)(?![a-z])(?:<sub>[0-9]+<\/sub>)?(?:<sup>[0-9]*[+\-]<\/sup>)?(?:$polyatomicPattern)/";
+        $hasCationBeforePolyatomic = $monatomicCations !== ''
+            && $polyatomicPattern !== ''
+            && (bool) preg_match($cationBeforePolyatomicPattern, $substancesStr);
+
+        if ($hasCationBeforePolyatomic)
+        {
+            $this->substances->push(new Substance($substancesStr, true));
+            return;
+        }
+        // TODO: Psudeocode for another early return for another polyatomic case.
+        //  check polyatomicCation + polyatomicIon
+        //  if ENTIRE THING matches any polyatomicIon
+
+        // TODO: drews idea:
+        //  right now i think the issue is that if polyatomic is inside of our reactant then it has issues
+        //  Past this point the entire thing needs to match the polyatomic ion
 
         $substanceParts = preg_split("/($polyatomicPattern)/", $substancesStr, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
 
