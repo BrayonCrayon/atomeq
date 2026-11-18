@@ -105,8 +105,13 @@ class Reactant extends Operand
         $isomerPattern = '/^[A-Z][a-z]?<sub>[0-9]+<\/sub>$/';
         $isIsomer = (bool) preg_match($isomerPattern, $substancesStr);
 
-        $polyatomicPattern = PolyatomicIon::query()->get()
-            ->map(fn (PolyatomicIon $ion) => Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', $ion->symbol) . "<sup>$ion->charge<\/sup>")
+        $polyatomicIons = PolyatomicIon::query()->get();
+
+        $polyatomicPattern  = $polyatomicIons->map(fn (PolyatomicIon $ion) => Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', $ion->symbol))
+            ->reject(fn (string $ion) => $isIsomer && preg_match($isomerPattern, stripslashes($ion)))
+            ->join('|');
+
+        $polyatomicChargePattern = $polyatomicIons->map(fn (PolyatomicIon $ion) => Str::replaceMatches('/(?<=[A-Za-z)])(\d+)/', '<sub>$1<\/sub>', $ion->symbol) . "<sup>$ion->charge<\/sup>")
             ->reject(fn (string $ion) => $isIsomer && preg_match($isomerPattern, stripslashes($ion)))
             ->join('|');
 
@@ -123,15 +128,22 @@ class Reactant extends Operand
 
         // A monatomic cation (with optional subscript/charge) leading the reactant, immediately followed by a polyatomic ion ex: (Na<sub>2</sub>SO<sub>4</sub>, KNO<sub>3</sub>)
         $cationBeforePolyatomicPattern = "/^(?:$monatomicCations)(?![a-z])(?:<sub>[0-9]+<\/sub>)?(?:<sup>[0-9]*[+\-]<\/sup>)?(?:$polyatomicPattern)/";
-        $hasCationBeforePolyatomic = $monatomicCations !== ''
-            && $polyatomicPattern !== ''
-            && (bool) preg_match($cationBeforePolyatomicPattern, $substancesStr);
+        $hasCationBeforePolyatomic = $polyatomicPattern !== '' && preg_match($cationBeforePolyatomicPattern, $substancesStr);
 
-        if ($hasCationBeforePolyatomic)
+        $containsPolyatomicIon = preg_match("/(?:$polyatomicPattern)$/", $substancesStr);
+
+        // TODO: We need to harded this check to ensure we are only identifying polyatomic ions according to chemistry rules. Look them up when you come back.
+        if ($containsPolyatomicIon || $hasCationBeforePolyatomic )
         {
             $this->substances->push(new Substance($substancesStr, true));
             return;
         }
+
+        //        if ($hasCationBeforePolyatomic)
+        //        {
+        //            $this->substances->push(new Substance($substancesStr, true));
+        //            return;
+        //        }
 
         // TODO: Psudeocode for another early return for another polyatomic case.
         //  check if there is polyatomic at all

@@ -527,5 +527,27 @@ describe("ReactantLewisStructure", function () {
         });
     });
 
+    describe("NaNO3", function () {
+       test("Sodium Nitrate", function () {
+           $sodium = new BondedElement('Na');
+           $nitrogen = new BondedElement('N');
+           $oxygens = collect([
+               new BondedElement('O', 3),
+               new BondedElement('O', 3),
+               new BondedElement('O', 3),
+           ]);
+           $bonds = $oxygens->map(function (BondedElement $oxygen) use ($nitrogen) {
+               return new Bond($oxygen, $nitrogen);
+           });
+           $bonds->push(new Bond($sodium, $nitrogen));
+           $target = new Reactant('NaNO<sub>3</sub>');
 
+           $target->lewisStructure();
+
+           $result = $target->calculatedStructures->first();
+           expect($result->bonds->count())->toEqual(4)
+               ->and($result->formalChargeScore)->toEqual(0)
+               ->and($result->bonds->toArray())->toEqual($bonds->toArray());
+       });
+    });
 });
