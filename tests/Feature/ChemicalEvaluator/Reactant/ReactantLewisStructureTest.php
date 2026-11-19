@@ -532,22 +532,39 @@ describe("ReactantLewisStructure", function () {
            $sodium = new BondedElement('Na');
            $nitrogen = new BondedElement('N');
            $oxygens = collect([
-               new BondedElement('O', 3),
+               new BondedElement('O', 2),
                new BondedElement('O', 3),
                new BondedElement('O', 3),
            ]);
-           $bonds = $oxygens->map(function (BondedElement $oxygen) use ($nitrogen) {
-               return new Bond($oxygen, $nitrogen);
-           });
-           $bonds->push(new Bond($sodium, $nitrogen));
+           $bonds = collect([
+               new Bond($oxygens[0], $nitrogen, 2),
+               new Bond($oxygens[1], $nitrogen, 1),
+               new Bond($oxygens[2], $nitrogen, 1),
+           ]);
            $target = new Reactant('NaNO<sub>3</sub>');
 
            $target->lewisStructure();
 
            $result = $target->calculatedStructures->first();
-           expect($result->bonds->count())->toEqual(4)
+           expect($result->bonds->count())->toEqual(3)
                ->and($result->formalChargeScore)->toEqual(0)
                ->and($result->bonds->toArray())->toEqual($bonds->toArray());
        });
     });
+    /**
+     * TODO: Test Cases Below:
+     *  Polyatomic Ion:
+     *      - Ca(OH)2
+     *      - Na2SO4
+     *      - NH4NO3
+     *      - (NH4)2SO4
+     *      - Al2(SO4)3
+     *
+     *  Non-Polyatomic Ion:
+     *      - H2SO4
+     *      - HNO3
+     *      - CO2
+     *      - SO2
+     */
+
 });
